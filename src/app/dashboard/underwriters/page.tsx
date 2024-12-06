@@ -1,3 +1,5 @@
+{/* manager cunderwriter view add api fetching here */}
+
 import * as React from 'react';
 import type { Metadata } from 'next';
 import Button from '@mui/material/Button';
@@ -9,13 +11,13 @@ import { Upload as UploadIcon } from '@phosphor-icons/react/dist/ssr/Upload';
 import dayjs from 'dayjs';
 
 import { config } from '@/config';
-import { CustomersFilters } from '@/components/dashboard/customer/customers-filters';
-import { CustomersTable } from '@/components/dashboard/customer/customers-table';
-import type { Customer } from '@/components/dashboard/customer/customers-table';
+import { UnderwritersFilters } from '@/components/dashboard/underwriter/underwriters-filters';
+import { UnderwritersTable } from '@/components/dashboard/underwriter/underwriters-table';
+import type { Underwriter } from '@/components/dashboard/underwriter/underwriters-table';
 
-export const metadata = { title: `Customers | Dashboard | ${config.site.name}` } satisfies Metadata;
+export const metadata = { title: `Underwriters | Dashboard | ${config.site.name}` } satisfies Metadata;
 
-const customers = [
+const underwriters = [
   {
     id: 'USR-010',
     name: 'Alcides Antonio',
@@ -107,19 +109,19 @@ const customers = [
     address: { city: 'San Diego', country: 'USA', state: 'California', street: '75247' },
     createdAt: dayjs().subtract(2, 'hours').toDate(),
   },
-] satisfies Customer[];
+] satisfies Underwriter[];
 
 export default function Page(): React.JSX.Element {
   const page = 0;
-  const rowsPerPage = 5;
+  const rowsPerPage = 15;
 
-  const paginatedCustomers = applyPagination(customers, page, rowsPerPage);
+  const paginatedUnderwriters = applyPagination(underwriters, page, rowsPerPage);
 
   return (
     <Stack spacing={3}>
       <Stack direction="row" spacing={3}>
         <Stack spacing={1} sx={{ flex: '1 1 auto' }}>
-          <Typography variant="h4">Customers</Typography>
+          <Typography variant="h4">Underwriters</Typography>
           <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
             <Button color="inherit" startIcon={<UploadIcon fontSize="var(--icon-fontSize-md)" />}>
               Import
@@ -135,17 +137,17 @@ export default function Page(): React.JSX.Element {
           </Button>
         </div>
       </Stack>
-      <CustomersFilters />
-      <CustomersTable
-        count={paginatedCustomers.length}
+      <UnderwritersFilters />
+      <UnderwritersTable
+        count={paginatedUnderwriters.length}
         page={page}
-        rows={paginatedCustomers}
+        rows={paginatedUnderwriters}
         rowsPerPage={rowsPerPage}
       />
     </Stack>
   );
 }
 
-function applyPagination(rows: Customer[], page: number, rowsPerPage: number): Customer[] {
+function applyPagination(rows: Underwriter[], page: number, rowsPerPage: number): Underwriter[] {
   return rows.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 }

@@ -1,8 +1,6 @@
 import * as React from 'react';
 import RouterLink from 'next/link';
 import Box from '@mui/material/Box';
-import Stack from '@mui/material/Stack';
-import Typography from '@mui/material/Typography';
 
 import { paths } from '@/paths';
 import { DynamicLogo } from '@/components/core/logo';
@@ -23,8 +21,8 @@ export function Layout({ children }: LayoutProps): React.JSX.Element {
     >
       <Box sx={{ display: 'flex', flex: '1 1 auto', flexDirection: 'column' }}>
         <Box sx={{ p: 3 }}>
-          <Box component={RouterLink} href={paths.home} sx={{ display: 'inline-block', fontSize: 0 }}>
-            <DynamicLogo colorDark="light" colorLight="dark" height={32} width={122} />
+          <Box component={RouterLink} href={paths.home} sx={{ display: 'inline-block', fontSize: 0, justifyContent: 'center' }}>
+            <DynamicLogo colorDark="light" colorLight="dark" height={100} width={122} />
           </Box>
         </Box>
         <Box sx={{ alignItems: 'center', display: 'flex', flex: '1 1 auto', justifyContent: 'center', p: 3 }}>
@@ -34,34 +32,41 @@ export function Layout({ children }: LayoutProps): React.JSX.Element {
       <Box
         sx={{
           alignItems: 'center',
-          background: 'radial-gradient(50% 50% at 50% 50%, #122647 0%, #090E23 100%)',
-          color: 'var(--mui-palette-common-white)',
+          background: 'radial-gradient(50% 50% at 50% 50%, #CBA328 0%, #5C5346 100%)',
+          color: 'var(--mui-palette-common-white)', 
           display: { xs: 'none', lg: 'flex' },
           justifyContent: 'center',
           p: 3,
+          position: 'relative',
+          overflow: 'hidden',
         }}
       >
-        <Stack spacing={3}>
-          <Stack spacing={1}>
-            <Typography color="inherit" sx={{ fontSize: '24px', lineHeight: '32px', textAlign: 'center' }} variant="h1">
-              Welcome to{' '}
-              <Box component="span" sx={{ color: '#15b79e' }}>
-                Devias Kit
-              </Box>
-            </Typography>
-            <Typography align="center" variant="subtitle1">
-              A professional template that comes with ready-to-use MUI components.
-            </Typography>
-          </Stack>
-          <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-            <Box
-              component="img"
-              alt="Widgets"
-              src="/assets/auth-widgets.png"
-              sx={{ height: 'auto', width: '100%', maxWidth: '600px' }}
-            />
+        <Box
+          sx={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            perspective: '1000px',
+          }}
+        >
+          <Box
+            sx={{
+              animation: 'flip 5s linear infinite',
+              transformStyle: 'preserve-3d',
+              '@keyframes flip': {
+                '0%': {
+                  transform: 'rotateY(0deg)',
+                },
+                '100%': {
+                  transform: 'rotateY(360deg)',
+                },
+              },
+            }}
+          >
+            <DynamicLogo colorDark="light" colorLight="light" height={300} width={300} />
           </Box>
-        </Stack>
+        </Box>
       </Box>
     </Box>
   );

@@ -1,74 +1,89 @@
 'use client';
 
-import * as React from 'react';
-import { zodResolver } from '@hookform/resolvers/zod';
-import Alert from '@mui/material/Alert';
-import Button from '@mui/material/Button';
-import FormControl from '@mui/material/FormControl';
-import FormHelperText from '@mui/material/FormHelperText';
-import InputLabel from '@mui/material/InputLabel';
-import OutlinedInput from '@mui/material/OutlinedInput';
-import Stack from '@mui/material/Stack';
-import Typography from '@mui/material/Typography';
-import { Controller, useForm } from 'react-hook-form';
-import { z as zod } from 'zod';
+import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { TextField, Button, Typography, Stack, Alert } from '@mui/material';
+import { paths } from '@/paths';
+import { useUser } from '@/hooks/use-user';
 
-import { authClient } from '@/lib/auth/client';
+interface ResetPasswordFormProps {
+  token: string;
+}
 
-const schema = zod.object({ email: zod.string().min(1, { message: 'Email is required' }).email() });
+export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState(false);
+  const { resetPassword } = useUser();
+  const router = useRouter();
 
-type Values = zod.infer<typeof schema>;
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setSuccess(false);
 
-const defaultValues = { email: '' } satisfies Values;
+    if (password !== confirmPassword) {
+      setError('Passwords do not match');
+      return;
+    }
 
-export function ResetPasswordForm(): React.JSX.Element {
-  const [isPending, setIsPending] = React.useState<boolean>(false);
-
-  const {
-    control,
-    handleSubmit,
-    setError,
-    formState: { errors },
-  } = useForm<Values>({ defaultValues, resolver: zodResolver(schema) });
-
-  const onSubmit = React.useCallback(
-    async (values: Values): Promise<void> => {
-      setIsPending(true);
-
-      const { error } = await authClient.resetPassword(values);
-
-      if (error) {
-        setError('root', { type: 'server', message: error });
-        setIsPending(false);
-        return;
+    try {
+      await resetPassword(token, password);
+      setSuccess(true);
+    } catch (err) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError('An unexpected error occurred. Please try again.');
       }
+    }
+  };
 
-      setIsPending(false);
-
-      // Redirect to confirm password reset
-    },
-    [setError]
-  );
+  if (success) {
+    return (
+      <Stack spacing={2}>
+        <Typography variant="h6">Password Reset Successful</Typography>
+        <Typography>
+          Your password has been successfully reset. You can now sign in with your new password.
+        </Typography>
+        <Button variant="contained" onClick={() => router.push(paths.auth.signIn)}>
+          Go to Sign In
+        </Button>
+      </Stack>
+    );
+  }
 
   return (
     <Stack spacing={4}>
-      <Typography variant="h5">Reset password</Typography>
-      <form onSubmit={handleSubmit(onSubmit)}>
-        <Stack spacing={2}>
-          <Controller
-            control={control}
-            name="email"
-            render={({ field }) => (
-              <FormControl error={Boolean(errors.email)}>
-                <InputLabel>Email address</InputLabel>
-                <OutlinedInput {...field} label="Email address" type="email" />
-                {errors.email ? <FormHelperText>{errors.email.message}</FormHelperText> : null}
-              </FormControl>
-            )}
+      <Typography variant="h4">Reset Password</Typography>
+      <form onSubmit={handleSubmit}>
+        <Stack spacing={3}>
+          <TextField
+            fullWidth
+            label="New Password"
+            name="password"
+            onChange={(e) => setPassword(e.target.value)}
+            type="password"
+            value={password}
+            required
           />
-          {errors.root ? <Alert color="error">{errors.root.message}</Alert> : null}
-          <Button disabled={isPending} type="submit" variant="contained">
-            Send recovery link
+          <TextField
+            fullWidth
+            label="Confirm New Password"
+            name="confirmPassword"
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            type="password"
+            value={confirmPassword}
+            required
+          />
+          {error && (
+            <Alert severity="error" sx={{ mt: 2 }}>
+              {error}
+            </Alert>
+          )}
+          <Button type="submit" variant="contained" fullWidth size="large">
+            Reset Password
           </Button>
         </Stack>
       </form>

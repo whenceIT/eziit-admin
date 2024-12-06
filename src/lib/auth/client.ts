@@ -1,97 +1,75 @@
-'use client';
-
+import axios from 'axios';
 import type { User } from '@/types/user';
 
-function generateToken(): string {
-  const arr = new Uint8Array(12);
-  window.crypto.getRandomValues(arr);
-  return Array.from(arr, (v) => v.toString(16).padStart(2, '0')).join('');
-}
-
-const user = {
-  id: 'USR-000',
-  avatar: '/assets/avatar.png',
-  firstName: 'Sofia',
-  lastName: 'Rivers',
-  email: 'sofia@devias.io',
-} satisfies User;
+const API_BASE_URL = 'https://ezitt.whencefinancesystem.com';
 
 export interface SignUpParams {
-  firstName: string;
-  lastName: string;
+  first_name: string;
+  last_name: string;
   email: string;
   password: string;
+  user_type: string;
 }
 
-export interface SignInWithOAuthParams {
-  provider: 'google' | 'discord';
-}
-
-export interface SignInWithPasswordParams {
+export interface SignInParams {
   email: string;
   password: string;
-}
-
-export interface ResetPasswordParams {
-  email: string;
 }
 
 class AuthClient {
-  async signUp(_: SignUpParams): Promise<{ error?: string }> {
-    // Make API request
-
-    // We do not handle the API, so we'll just generate a token and store it in localStorage.
-    const token = generateToken();
-    localStorage.setItem('custom-auth-token', token);
-
-    return {};
+  async signUp(params: SignUpParams): Promise<User> {
+    const response = await axios.post(`${API_BASE_URL}/create-user`, params);
+    const { token, user } = response.data;
+    localStorage.setItem('auth-token', token);
+    return user;
   }
 
-  async signInWithOAuth(_: SignInWithOAuthParams): Promise<{ error?: string }> {
-    return { error: 'Social authentication not implemented' };
-  }
-
-  async signInWithPassword(params: SignInWithPasswordParams): Promise<{ error?: string }> {
-    const { email, password } = params;
-
-    // Make API request
-
-    // We do not handle the API, so we'll check if the credentials match with the hardcoded ones.
-    if (email !== 'sofia@devias.io' || password !== 'Secret1') {
-      return { error: 'Invalid credentials' };
+  async signIn(params: SignInParams): Promise<User> {
+    try {
+      const response = await axios.post(`${API_BASE_URL}/sign-in`, params);
+      const { token, user } = response.data;
+      localStorage.setItem('auth-token', token);
+      return user;
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response) {
+        throw new Error(error.response.data.response || 'Failed to sign in');
+      }
+      throw new Error('An unexpected error occurred')
     }
-
-    const token = generateToken();
-    localStorage.setItem('custom-auth-token', token);
-
-    return {};
   }
 
-  async resetPassword(_: ResetPasswordParams): Promise<{ error?: string }> {
-    return { error: 'Password reset not implemented' };
-  }
+  async getUser(): Promise<User | null> {
+    const token = localStorage.getItem('auth-token');
+    if (!token) return null;
 
-  async updatePassword(_: ResetPasswordParams): Promise<{ error?: string }> {
-    return { error: 'Update reset not implemented' };
-  }
-
-  async getUser(): Promise<{ data?: User | null; error?: string }> {
-    // Make API request
-
-    // We do not handle the API, so just check if we have a token in localStorage.
-    const token = localStorage.getItem('custom-auth-token');
-
-    if (!token) {
-      return { data: null };
+    try {
+      const response = await axios.get(`${API_BASE_URL}/users`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Failed to fetch user:', error);
+      return null;
     }
-
-    return { data: user };
   }
 
-  async signOut(): Promise<{ error?: string }> {
-    localStorage.removeItem('custom-auth-token');
+  signOut(): void {
+    localStorage.removeItem('auth-token');
+  }
 
-    return {};
+  async updateUser(userData: Partial<User>): Promise<User> {
+    const token = localStorage.getItem('auth-token');
+    if (!token) throw new Error('No authentication token found');
+
+    try {
+      const response = await axios.put(`${API_BASE_URL}/users`, userData, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Failed to update user:', error);
+      throw error;
+    }
   }
 }
 

@@ -22,31 +22,30 @@ function noop(): void {
   // do nothing
 }
 
-export interface Customer {
-  id: string;
-  avatar: string;
-  name: string;
-  email: string;
-  address: { city: string; state: string; country: string; street: string };
-  phone: string;
-  createdAt: Date;
+export interface Employer {
+  id: number;
+  user_id: number | null; 
+  //name: string;
+  merchants: string | null;
+  employees: string | null;
+  transactions: string | null;
 }
 
-interface CustomersTableProps {
+interface EmployersTableProps {
   count?: number;
   page?: number;
-  rows?: Customer[];
+  rows?: Employer[];
   rowsPerPage?: number;
 }
 
-export function CustomersTable({
+export function EmployersTable({
   count = 0,
   rows = [],
   page = 0,
   rowsPerPage = 0,
-}: CustomersTableProps): React.JSX.Element {
+}: EmployersTableProps): React.JSX.Element {
   const rowIds = React.useMemo(() => {
-    return rows.map((customer) => customer.id);
+    return rows.map((employer) => employer.id);
   }, [rows]);
 
   const { selectAll, deselectAll, selectOne, deselectOne, selected } = useSelection(rowIds);
@@ -73,11 +72,12 @@ export function CustomersTable({
                   }}
                 />
               </TableCell>
-              <TableCell>Name</TableCell>
-              <TableCell>Email</TableCell>
-              <TableCell>Location</TableCell>
-              <TableCell>Phone</TableCell>
-              <TableCell>Signed Up</TableCell>
+              <TableCell>ID</TableCell>
+              <TableCell>User ID</TableCell>
+              {/*<TableCell>Name</TableCell>*/}
+              <TableCell>Employees</TableCell>
+              <TableCell>Transactions</TableCell>
+              <TableCell>Merchants</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -98,18 +98,12 @@ export function CustomersTable({
                       }}
                     />
                   </TableCell>
-                  <TableCell>
-                    <Stack sx={{ alignItems: 'center' }} direction="row" spacing={2}>
-                      <Avatar src={row.avatar} />
-                      <Typography variant="subtitle2">{row.name}</Typography>
-                    </Stack>
-                  </TableCell>
-                  <TableCell>{row.email}</TableCell>
-                  <TableCell>
-                    {row.address.city}, {row.address.state}, {row.address.country}
-                  </TableCell>
-                  <TableCell>{row.phone}</TableCell>
-                  <TableCell>{dayjs(row.createdAt).format('MMM D, YYYY')}</TableCell>
+                  <TableCell>{row.id}</TableCell>
+                  <TableCell>{row.user_id ?? 'N/A'}</TableCell>
+                  {/*<TableCell>{row.name ?? 'N/A'}</TableCell>*/}
+                  <TableCell>{row.employees ?? 'N/A'}</TableCell>
+                  <TableCell>{row.transactions ?? 'N/A'}</TableCell>
+                  <TableCell>{row.merchants ?? 'N/A'}</TableCell>
                 </TableRow>
               );
             })}

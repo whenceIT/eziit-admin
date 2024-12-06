@@ -19,7 +19,7 @@ export interface Product {
   id: string;
   image: string;
   name: string;
-  updatedAt: Date;
+  
 }
 
 export interface LatestProductsProps {
@@ -30,7 +30,7 @@ export interface LatestProductsProps {
 export function LatestProducts({ products = [], sx }: LatestProductsProps): React.JSX.Element {
   return (
     <Card sx={sx}>
-      <CardHeader title="Latest products" />
+      <CardHeader title="Frequently Used Merchants" />
       <Divider />
       <List>
         {products.map((product, index) => (
@@ -52,7 +52,7 @@ export function LatestProducts({ products = [], sx }: LatestProductsProps): Reac
             <ListItemText
               primary={product.name}
               primaryTypographyProps={{ variant: 'subtitle1' }}
-              secondary={`Updated ${dayjs(product.updatedAt).format('MMM D, YYYY')}`}
+              //secondary={`Updated ${dayjs(product.updatedAt).format('MMM D, YYYY')}`}
               secondaryTypographyProps={{ variant: 'body2' }}
             />
             <IconButton edge="end">
@@ -62,16 +62,7 @@ export function LatestProducts({ products = [], sx }: LatestProductsProps): Reac
         ))}
       </List>
       <Divider />
-      <CardActions sx={{ justifyContent: 'flex-end' }}>
-        <Button
-          color="inherit"
-          endIcon={<ArrowRightIcon fontSize="var(--icon-fontSize-md)" />}
-          size="small"
-          variant="text"
-        >
-          View all
-        </Button>
-      </CardActions>
+      
     </Card>
   );
 }

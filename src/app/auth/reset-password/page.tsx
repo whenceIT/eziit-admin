@@ -1,19 +1,17 @@
-import * as React from 'react';
-import type { Metadata } from 'next';
+'use client';
 
-import { config } from '@/config';
-import { GuestGuard } from '@/components/auth/guest-guard';
+import * as React from 'react';
+import { useParams } from 'next/navigation';
 import { Layout } from '@/components/auth/layout';
 import { ResetPasswordForm } from '@/components/auth/reset-password-form';
 
-export const metadata = { title: `Reset password | Auth | ${config.site.name}` } satisfies Metadata;
+export default function ResetPasswordPage(): React.JSX.Element {
+  const params = useParams();
+  const token = params.token as string;
 
-export default function Page(): React.JSX.Element {
   return (
     <Layout>
-      <GuestGuard>
-        <ResetPasswordForm />
-      </GuestGuard>
+      <ResetPasswordForm token={token} />
     </Layout>
   );
 }

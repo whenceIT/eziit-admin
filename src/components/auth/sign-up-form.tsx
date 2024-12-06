@@ -1,74 +1,62 @@
 'use client';
 
-import * as React from 'react';
-import RouterLink from 'next/link';
+import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { zodResolver } from '@hookform/resolvers/zod';
-import Alert from '@mui/material/Alert';
-import Button from '@mui/material/Button';
-import Checkbox from '@mui/material/Checkbox';
-import FormControl from '@mui/material/FormControl';
-import FormControlLabel from '@mui/material/FormControlLabel';
-import FormHelperText from '@mui/material/FormHelperText';
-import InputLabel from '@mui/material/InputLabel';
-import Link from '@mui/material/Link';
-import OutlinedInput from '@mui/material/OutlinedInput';
-import Stack from '@mui/material/Stack';
-import Typography from '@mui/material/Typography';
-import { Controller, useForm } from 'react-hook-form';
-import { z as zod } from 'zod';
-
-import { paths } from '@/paths';
-import { authClient } from '@/lib/auth/client';
 import { useUser } from '@/hooks/use-user';
+import { Box, Button, FormControl, FormHelperText, InputLabel, OutlinedInput, Stack, Typography, Link } from '@mui/material';
+import { paths } from '@/paths';
 
-const schema = zod.object({
-  firstName: zod.string().min(1, { message: 'First name is required' }),
-  lastName: zod.string().min(1, { message: 'Last name is required' }),
-  email: zod.string().min(1, { message: 'Email is required' }).email(),
-  password: zod.string().min(6, { message: 'Password should be at least 6 characters' }),
-  terms: zod.boolean().refine((value) => value, 'You must accept the terms and conditions'),
-});
+export function SignUpForm() {
+  const [first_name, setFirstName] = useState('');
+  const [last_name, setLastName] = useState('');
+  const [email, setEmail] = useState('');
+  
+  const [password, setPassword] = useState('');
+  const [retypePassword, setRetypePassword] = useState('');
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [error, setError] = useState('');
+  const [formErrors, setFormErrors] = useState({
+    first_name: '',
+    last_name: '',
+    email: '',
+    
+    password: '',
+    retypePassword: '',
+    terms: '',
+  });
 
-type Values = zod.infer<typeof schema>;
-
-const defaultValues = { firstName: '', lastName: '', email: '', password: '', terms: false } satisfies Values;
-
-export function SignUpForm(): React.JSX.Element {
+  const { signUp } = useUser();
   const router = useRouter();
 
-  const { checkSession } = useUser();
+  const validate = () => {
+    const errors: typeof formErrors = {
+      first_name: first_name ? '' : 'First name is required',
+      last_name: last_name ? '' : 'Last name is required',
+      email: email ? (/^\S+@\S+\.\S+$/.test(email) ? '' : 'Invalid email') : 'Email is required',
+      
+      password: password.length >= 6 ? '' : 'Password must be at least 6 characters',
+      retypePassword: password === retypePassword ? '' : 'Passwords do not match',
+      terms: termsAccepted ? '' : 'You must accept the terms and conditions',
+    };
 
-  const [isPending, setIsPending] = React.useState<boolean>(false);
+    setFormErrors(errors);
 
-  const {
-    control,
-    handleSubmit,
-    setError,
-    formState: { errors },
-  } = useForm<Values>({ defaultValues, resolver: zodResolver(schema) });
+    return Object.values(errors).every((err) => !err);
+  };
 
-  const onSubmit = React.useCallback(
-    async (values: Values): Promise<void> => {
-      setIsPending(true);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
 
-      const { error } = await authClient.signUp(values);
+    if (!validate()) return;
 
-      if (error) {
-        setError('root', { type: 'server', message: error });
-        setIsPending(false);
-        return;
-      }
-
-      // Refresh the auth state
-      await checkSession?.();
-
-      // UserProvider, for this case, will not refresh the router
-      // After refresh, GuestGuard will handle the redirect
-      router.refresh();
-    },
-    [checkSession, router, setError]
-  );
+    try {
+      await signUp(first_name, last_name, email, password, 'admin');
+      router.push(paths.auth.signIn);
+    } catch (err) {
+      setError('Failed to sign up. Please try again.');
+    }
+  };
 
   return (
     <Stack spacing={3}>
@@ -76,81 +64,88 @@ export function SignUpForm(): React.JSX.Element {
         <Typography variant="h4">Sign up</Typography>
         <Typography color="text.secondary" variant="body2">
           Already have an account?{' '}
-          <Link component={RouterLink} href={paths.auth.signIn} underline="hover" variant="subtitle2">
+          <Link href={paths.auth.signIn} underline="hover" variant="subtitle2">
             Sign in
           </Link>
         </Typography>
       </Stack>
-      <form onSubmit={handleSubmit(onSubmit)}>
+      <form onSubmit={handleSubmit}>
         <Stack spacing={2}>
-          <Controller
-            control={control}
-            name="firstName"
-            render={({ field }) => (
-              <FormControl error={Boolean(errors.firstName)}>
-                <InputLabel>First name</InputLabel>
-                <OutlinedInput {...field} label="First name" />
-                {errors.firstName ? <FormHelperText>{errors.firstName.message}</FormHelperText> : null}
-              </FormControl>
-            )}
-          />
-          <Controller
-            control={control}
-            name="lastName"
-            render={({ field }) => (
-              <FormControl error={Boolean(errors.firstName)}>
-                <InputLabel>Last name</InputLabel>
-                <OutlinedInput {...field} label="Last name" />
-                {errors.firstName ? <FormHelperText>{errors.firstName.message}</FormHelperText> : null}
-              </FormControl>
-            )}
-          />
-          <Controller
-            control={control}
-            name="email"
-            render={({ field }) => (
-              <FormControl error={Boolean(errors.email)}>
-                <InputLabel>Email address</InputLabel>
-                <OutlinedInput {...field} label="Email address" type="email" />
-                {errors.email ? <FormHelperText>{errors.email.message}</FormHelperText> : null}
-              </FormControl>
-            )}
-          />
-          <Controller
-            control={control}
-            name="password"
-            render={({ field }) => (
-              <FormControl error={Boolean(errors.password)}>
-                <InputLabel>Password</InputLabel>
-                <OutlinedInput {...field} label="Password" type="password" />
-                {errors.password ? <FormHelperText>{errors.password.message}</FormHelperText> : null}
-              </FormControl>
-            )}
-          />
-          <Controller
-            control={control}
-            name="terms"
-            render={({ field }) => (
-              <div>
-                <FormControlLabel
-                  control={<Checkbox {...field} />}
-                  label={
-                    <React.Fragment>
-                      I have read the <Link>terms and conditions</Link>
-                    </React.Fragment>
-                  }
-                />
-                {errors.terms ? <FormHelperText error>{errors.terms.message}</FormHelperText> : null}
-              </div>
-            )}
-          />
-          {errors.root ? <Alert color="error">{errors.root.message}</Alert> : null}
-          <Button disabled={isPending} type="submit" variant="contained">
-            Sign up
+          <FormControl error={Boolean(formErrors.first_name)}>
+            <InputLabel>First Name</InputLabel>
+            <OutlinedInput
+              value={first_name}
+              onChange={(e) => setFirstName(e.target.value)}
+              label="First Name"
+            />
+            {formErrors.first_name && <FormHelperText>{formErrors.first_name}</FormHelperText>}
+          </FormControl>
+          <FormControl error={Boolean(formErrors.last_name)}>
+            <InputLabel>Last Name</InputLabel>
+            <OutlinedInput
+              value={last_name}
+              onChange={(e) => setLastName(e.target.value)}
+              label="Last Name"
+            />
+            {formErrors.last_name && <FormHelperText>{formErrors.last_name}</FormHelperText>}
+          </FormControl>
+          <FormControl error={Boolean(formErrors.email)}>
+            <InputLabel>Email Address</InputLabel>
+            <OutlinedInput
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              label="Email Address"
+              type="email"
+            />
+            {formErrors.email && <FormHelperText>{formErrors.email}</FormHelperText>}
+          </FormControl>
+          
+
+          <FormControl error={Boolean(formErrors.password)}>
+            <InputLabel>Password</InputLabel>
+            <OutlinedInput
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              label="Password"
+              type="password"
+            />
+            {formErrors.password && <FormHelperText>{formErrors.password}</FormHelperText>}
+          </FormControl>
+          <FormControl error={Boolean(formErrors.retypePassword)}>
+            <InputLabel>Retype Password</InputLabel>
+            <OutlinedInput
+              value={retypePassword}
+              onChange={(e) => setRetypePassword(e.target.value)}
+              label="Retype Password"
+              type="password"
+            />
+            {formErrors.retypePassword && <FormHelperText>{formErrors.retypePassword}</FormHelperText>}
+          </FormControl>
+          <FormControl error={Boolean(formErrors.terms)}>
+            <Box display="flex" alignItems="center">
+              <input
+                type="checkbox"
+                checked={termsAccepted}
+                onChange={(e) => setTermsAccepted(e.target.checked)}
+                style={{ marginRight: 8 }}
+              />
+              <Typography variant="body2">
+                I have read the <Link href="#">terms and conditions</Link>
+              </Typography>
+            </Box>
+            {formErrors.terms && <FormHelperText>{formErrors.terms}</FormHelperText>}
+          </FormControl>
+          {error && (
+            <Typography color="error" align="center">
+              {error}
+            </Typography>
+          )}
+          <Button type="submit" variant="contained">
+            Sign Up
           </Button>
         </Stack>
       </form>
-      <Alert color="warning">Created users are not persisted</Alert>
+      <Typography color="warning"></Typography>
     </Stack>
   );
 }

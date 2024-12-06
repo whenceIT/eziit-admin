@@ -1,4 +1,4 @@
-'use client';
+{/*'use client';
 
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
@@ -52,4 +52,4 @@ export function GuestGuard({ children }: GuestGuardProps): React.JSX.Element | n
   }
 
   return <React.Fragment>{children}</React.Fragment>;
-}
+}*/}

@@ -1,16 +1,31 @@
+'use client';
+
 import * as React from 'react';
-import type { Metadata } from 'next';
+import { useEffect } from 'react';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
-
+import { useUser } from '@/hooks/use-user';
 import { config } from '@/config';
+
 import { AccountDetailsForm } from '@/components/dashboard/account/account-details-form';
 import { AccountInfo } from '@/components/dashboard/account/account-info';
 
-export const metadata = { title: `Account | Dashboard | ${config.site.name}` } satisfies Metadata;
-
 export default function Page(): React.JSX.Element {
+  const { user, loading } = useUser();
+
+  useEffect(() => {
+    document.title = `Account | Dashboard | ${config.site.name}`;
+  }, []);
+
+  if (loading) {
+    return <Typography>Loading...</Typography>;
+  }
+
+  if (!user) {
+    return <Typography>Please sign in to view this page.</Typography>;
+  }
+
   return (
     <Stack spacing={3}>
       <div>

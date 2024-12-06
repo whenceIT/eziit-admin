@@ -9,27 +9,71 @@ import { useTheme } from '@mui/material/styles';
 import type { SxProps } from '@mui/material/styles';
 import Typography from '@mui/material/Typography';
 import type { Icon } from '@phosphor-icons/react/dist/lib/types';
-import { Desktop as DesktopIcon } from '@phosphor-icons/react/dist/ssr/Desktop';
-import { DeviceTablet as DeviceTabletIcon } from '@phosphor-icons/react/dist/ssr/DeviceTablet';
-import { Phone as PhoneIcon } from '@phosphor-icons/react/dist/ssr/Phone';
+import { Users as UsersIcon } from '@phosphor-icons/react/dist/ssr/Users';
+import { Storefront as StorefrontIcon } from '@phosphor-icons/react/dist/ssr/Storefront';
 import type { ApexOptions } from 'apexcharts';
 
 import { Chart } from '@/components/core/chart';
 
-const iconMapping = { Desktop: DesktopIcon, Tablet: DeviceTabletIcon, Phone: PhoneIcon } as Record<string, Icon>;
+const iconMapping = { Clients: UsersIcon, Merchants: StorefrontIcon } as Record<string, Icon>;
 
 export interface TrafficProps {
-  chartSeries: number[];
-  labels: string[];
   sx?: SxProps;
 }
 
-export function Traffic({ chartSeries, labels, sx }: TrafficProps): React.JSX.Element {
+export function Traffic({ sx }: TrafficProps): React.JSX.Element {
+  const [chartSeries, setChartSeries] = React.useState<number[]>([]);
+  const [labels, setLabels] = React.useState<string[]>(['Clients', 'Merchants']);
+  const [isLoading, setIsLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [clientsResponse, merchantsResponse] = await Promise.all([
+          fetch('https://ezitt.whencefinancesystem.com/clients'),
+          fetch('https://ezitt.whencefinancesystem.com/merchants')
+        ]);
+
+        if (!clientsResponse.ok || !merchantsResponse.ok) {
+          throw new Error('Failed to fetch data');
+        }
+
+        const clientsData = await clientsResponse.json();
+        const merchantsData = await merchantsResponse.json();
+
+        const clientCount = clientsData.length;
+        const merchantCount = merchantsData.length;
+        const total = clientCount + merchantCount;
+
+        setChartSeries([
+          (clientCount / total) * 100,
+          (merchantCount / total) * 100
+        ]);
+
+        setIsLoading(false);
+      } catch (err) {
+        setError('Failed to load data');
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
   const chartOptions = useChartOptions(labels);
+
+  if (isLoading) {
+    return <Card sx={sx}><CardContent>Loading...</CardContent></Card>;
+  }
+
+  if (error) {
+    return <Card sx={sx}><CardContent>{error}</CardContent></Card>;
+  }
 
   return (
     <Card sx={sx}>
-      <CardHeader title="Traffic source" />
+      <CardHeader title="User Distribution" />
       <CardContent>
         <Stack spacing={2}>
           <Chart height={300} options={chartOptions} series={chartSeries} type="donut" width="100%" />
@@ -43,7 +87,7 @@ export function Traffic({ chartSeries, labels, sx }: TrafficProps): React.JSX.El
                   {Icon ? <Icon fontSize="var(--icon-fontSize-lg)" /> : null}
                   <Typography variant="h6">{label}</Typography>
                   <Typography color="text.secondary" variant="subtitle2">
-                    {item}%
+                    {item.toFixed(1)}%
                   </Typography>
                 </Stack>
               );
@@ -60,7 +104,7 @@ function useChartOptions(labels: string[]): ApexOptions {
 
   return {
     chart: { background: 'transparent' },
-    colors: [theme.palette.primary.main, theme.palette.success.main, theme.palette.warning.main],
+    colors: [theme.palette.warning.main, theme.palette.success.main],
     dataLabels: { enabled: false },
     labels,
     legend: { show: false },
