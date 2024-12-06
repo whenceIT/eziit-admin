@@ -1,9 +1,9 @@
 {
   "name": "material-kit-react",
   "version": "4.0.0",
-  "author": "Devias",
+  "author": "Eziit",
   "licence": "MIT",
-  "homepage": "https://devias.io",
+  "homepage": "",
   "private": false,
   "scripts": {
     "dev": "next dev",

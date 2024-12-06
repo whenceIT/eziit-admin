@@ -140,7 +140,7 @@ export default function StatisticsPage() {
           <Grid item xs={12} md={4}>
             <Card elevation={3}>
               <CardContent>
-                <Typography variant="h8" gutterBottom color="secondary">
+                <Typography variant="subtitle1" gutterBottom color="secondary">
                   Active Counts
                 </Typography>
                 <List>
@@ -162,7 +162,7 @@ export default function StatisticsPage() {
           <Grid item xs={12} md={4}>
             <Card elevation={3}>
               <CardContent>
-                <Typography variant="h8" gutterBottom color="secondary">
+                <Typography variant="subtitle1" gutterBottom color="secondary">
                   Outstanding Balances
                 </Typography>
                 <Typography variant="h4" color="#E25822">
@@ -179,7 +179,7 @@ export default function StatisticsPage() {
           <Grid item xs={12} md={4}>
             <Card elevation={3}>
               <CardContent>
-                <Typography variant="h8" gutterBottom color="secondary">
+                <Typography variant="subtitle1" gutterBottom color="secondary">
                   Group Wallet Usage
                 </Typography>
                 <Typography variant="h4" color="#E25822">
