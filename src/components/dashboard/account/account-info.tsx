@@ -27,7 +27,7 @@ export function AccountInfo(): React.JSX.Element {
           </div>
           <Stack spacing={1} sx={{ textAlign: 'center' }}>
             <Typography variant="h5">{`${user.first_name} ${user.last_name}`}</Typography>
-            <Typography color="text.secondary" variant="body2">
+            {/*<Typography color="text.secondary" variant="body2">
               {user.city} {user.country}
             </Typography>
             {/*<Typography color="text.secondary" variant="body2">

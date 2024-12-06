@@ -111,7 +111,7 @@ export function AccountDetailsForm(): React.JSX.Element {
             <Grid md={6} xs={12}>
               <FormControl fullWidth>
                 <InputLabel>State</InputLabel>
-                <Select
+                {/*<Select
                   value={formData.state}
                   onChange={handleChange}
                   label="State"
@@ -123,7 +123,7 @@ export function AccountDetailsForm(): React.JSX.Element {
                       {option.label}
                     </MenuItem>
                   ))}
-                </Select>
+                </Select>*/}
               </FormControl>
             </Grid>
             <Grid md={6} xs={12}>
