@@ -80,11 +80,11 @@ export function SignInForm() {
               }
             />
           </FormControl>
-          <div>
+          {/*<div>
             <Link href={paths.auth.resetPassword} variant="subtitle2">
               Forgot password?
             </Link>
-          </div>
+          </div>*/}
           {error && <Alert severity="error">{error}</Alert>}
           <Button type="submit" variant="contained" fullWidth>
             Sign In

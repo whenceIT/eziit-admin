@@ -13,6 +13,7 @@ interface UserContextType {
   updateUser: (userData: Partial<User>) => Promise<void>;
 }
 
+
 export const UserContext = createContext<UserContextType | undefined>(undefined);
 
 export function UserProvider({ children }: { children: React.ReactNode }) {

@@ -1,4 +1,4 @@
-'use client';
+/*'use client';
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -89,4 +89,4 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
       </form>
     </Stack>
   );
-}
+}*/

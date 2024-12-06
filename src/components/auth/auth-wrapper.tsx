@@ -12,7 +12,7 @@ export function AuthWrapper({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!loading && !user) {
-      router.push(paths.auth.signIn);
+      //router.push(paths.auth.signIn);
     }
   }, [user, loading, router]);
 
