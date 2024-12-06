@@ -1,4 +1,4 @@
-'use client';
+/*'use client';
 
 import * as React from 'react';
 import { useParams } from 'next/navigation';
@@ -14,4 +14,4 @@ export default function ResetPasswordPage(): React.JSX.Element {
       <ResetPasswordForm token={token} />
     </Layout>
   );
-}
+}*/
