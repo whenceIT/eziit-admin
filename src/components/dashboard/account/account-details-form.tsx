@@ -110,8 +110,8 @@ export function AccountDetailsForm(): React.JSX.Element {
             </Grid>
             <Grid md={6} xs={12}>
               <FormControl fullWidth>
-                <InputLabel>State</InputLabel>
-                {/*<Select
+                {/*<InputLabel>State</InputLabel>
+                <Select
                   value={formData.state}
                   onChange={handleChange}
                   label="State"
@@ -127,7 +127,7 @@ export function AccountDetailsForm(): React.JSX.Element {
               </FormControl>
             </Grid>
             <Grid md={6} xs={12}>
-              <FormControl fullWidth>
+              {/*<FormControl fullWidth>
                 <InputLabel>City</InputLabel>
                 <OutlinedInput
                   value={formData.city}
@@ -135,7 +135,7 @@ export function AccountDetailsForm(): React.JSX.Element {
                   label="City"
                   name="city"
                 />
-              </FormControl>
+              </FormControl>*/}
             </Grid>
           </Grid>
         </CardContent>
