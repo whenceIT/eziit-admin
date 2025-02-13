@@ -12,7 +12,7 @@ export function AuthWrapper({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!loading && !user) {
-      //router.push(paths.auth.signIn);
+      router.push(paths.auth.signIn);
     }
   }, [user, loading, router]);
 
@@ -22,6 +22,10 @@ export function AuthWrapper({ children }: { children: React.ReactNode }) {
         <CircularProgress />
       </Box>
     );
+  }
+  if (!user) {
+    router.push(paths.auth.signIn);
+    return null;
   }
 
   return <>{children}</>;

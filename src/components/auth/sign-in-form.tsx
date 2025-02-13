@@ -1,36 +1,53 @@
-'use client';
+"use client"
 
-import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { TextField, Button, Typography, Stack, Alert, Link, FormControl, InputLabel, OutlinedInput, FormHelperText } from '@mui/material';
-import { Eye as EyeIcon } from '@phosphor-icons/react';
-import { EyeSlash as EyeSlashIcon } from '@phosphor-icons/react';
-import { paths } from '@/paths';
-import { useUser } from '@/hooks/use-user';
+import type React from "react"
+import { useState } from "react"
+import { useRouter } from "next/navigation"
+import {
+  TextField,
+  Button,
+  Typography,
+  Stack,
+  Alert,
+  Link,
+  FormControl,
+  InputLabel,
+  OutlinedInput,
+} from "@mui/material"
+import { Eye as EyeIcon, EyeSlash as EyeSlashIcon } from "@phosphor-icons/react"
+import { paths } from "@/paths"
+import { useUser } from "@/hooks/use-user"
 
 export function SignInForm() {
-  
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState('');
-  const { signIn } = useUser();
-  const router = useRouter();
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [showPassword, setShowPassword] = useState(false)
+  const [error, setError] = useState("")
+  const [isLoading, setIsLoading] = useState(false)
+  const { signIn } = useUser()
+  const router = useRouter()
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
+    e.preventDefault()
+    setError("")
+    setIsLoading(true)
     try {
-      await signIn(email, password);
-      router.push(paths.dashboard.overview);
+      const user = await signIn(email, password)
+      if (user.user_type === "merchant") {
+        router.push(paths.dashboard.merchantOverview)
+      } else {
+        router.push(paths.dashboard.overview)
+      }
     } catch (err) {
       if (err instanceof Error) {
-        setError(err.message);
+        setError(err.message)
       } else {
-        setError('Incorrect email or password. Please try again.');
+        setError("Incorrect email or password. Please try again.")
       }
+    } finally {
+      setIsLoading(false)
     }
-  };
+  }
 
   return (
     <Stack spacing={4}>
@@ -80,11 +97,6 @@ export function SignInForm() {
               }
             />
           </FormControl>
-          {/*<div>
-            <Link href={paths.auth.resetPassword} variant="subtitle2">
-              Forgot password?
-            </Link>
-          </div>*/}
           {error && <Alert severity="error">{error}</Alert>}
           <Button type="submit" variant="contained" fullWidth>
             Sign In
@@ -94,3 +106,4 @@ export function SignInForm() {
     </Stack>
   );
 }
+

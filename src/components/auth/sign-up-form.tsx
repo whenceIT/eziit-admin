@@ -3,14 +3,15 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@/hooks/use-user';
-import { Box, Button, FormControl, FormHelperText, InputLabel, OutlinedInput, Stack, Typography, Link } from '@mui/material';
+import { Box, Button, FormControl, FormHelperText, InputLabel, OutlinedInput, Stack, Typography, Link, Select, MenuItem } from '@mui/material';
 import { paths } from '@/paths';
 
 export function SignUpForm() {
   const [first_name, setFirstName] = useState('');
   const [last_name, setLastName] = useState('');
   const [email, setEmail] = useState('');
-  
+  const [organisation_name, setOrganisationName] = useState('');
+  const [user_type, setUserType] = useState('');
   const [password, setPassword] = useState('');
   const [retypePassword, setRetypePassword] = useState('');
   const [termsAccepted, setTermsAccepted] = useState(false);
@@ -19,7 +20,8 @@ export function SignUpForm() {
     first_name: '',
     last_name: '',
     email: '',
-    
+    organisation_name: '',
+    user_type: '',
     password: '',
     retypePassword: '',
     terms: '',
@@ -33,7 +35,8 @@ export function SignUpForm() {
       first_name: first_name ? '' : 'First name is required',
       last_name: last_name ? '' : 'Last name is required',
       email: email ? (/^\S+@\S+\.\S+$/.test(email) ? '' : 'Invalid email') : 'Email is required',
-      
+      organisation_name: organisation_name ? '' : 'Organisation name is required',
+      user_type: user_type ? '' : 'User type is required',
       password: password.length >= 6 ? '' : 'Password must be at least 6 characters',
       retypePassword: password === retypePassword ? '' : 'Passwords do not match',
       terms: termsAccepted ? '' : 'You must accept the terms and conditions',
@@ -51,7 +54,7 @@ export function SignUpForm() {
     if (!validate()) return;
 
     try {
-      await signUp(first_name, last_name, email, password, 'admin');
+      await signUp(first_name, last_name, email, password, user_type, organisation_name);
       router.push(paths.auth.signIn);
     } catch (err) {
       setError('Failed to sign up. Please try again.');
@@ -99,8 +102,29 @@ export function SignUpForm() {
             />
             {formErrors.email && <FormHelperText>{formErrors.email}</FormHelperText>}
           </FormControl>
-          
-
+          <FormControl error={Boolean(formErrors.organisation_name)}>
+            <InputLabel>Organisation Name</InputLabel>
+            <OutlinedInput
+              value={organisation_name}
+              onChange={(e) => setOrganisationName(e.target.value)}
+              label="Organisation Name"
+            />
+            {formErrors.organisation_name && <FormHelperText>{formErrors.organisation_name}</FormHelperText>}
+          </FormControl>
+          <FormControl error={Boolean(formErrors.user_type)}>
+            <InputLabel>User Type</InputLabel>
+            <Select
+              value={user_type}
+              onChange={(e) => setUserType(e.target.value)}
+              label="User Type"
+            >
+              <MenuItem value="employer">Employer</MenuItem>
+              <MenuItem value="merchant">Merchant</MenuItem>
+              <MenuItem value="underwriter">Underwriter</MenuItem>
+              <MenuItem value="client">Client</MenuItem>
+            </Select>
+            {formErrors.user_type && <FormHelperText>{formErrors.user_type}</FormHelperText>}
+          </FormControl>
           <FormControl error={Boolean(formErrors.password)}>
             <InputLabel>Password</InputLabel>
             <OutlinedInput
@@ -149,3 +173,4 @@ export function SignUpForm() {
     </Stack>
   );
 }
+

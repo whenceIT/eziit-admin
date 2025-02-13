@@ -1,78 +1,106 @@
-import * as React from 'react';
-import Link from 'next/link';
-import Box from '@mui/material/Box';
-import Button from '@mui/material/Button';
-import Card from '@mui/material/Card';
-import CardActions from '@mui/material/CardActions';
-import CardHeader from '@mui/material/CardHeader';
-import Chip from '@mui/material/Chip';
-import Divider from '@mui/material/Divider';
-import type { SxProps } from '@mui/material/styles';
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableCell from '@mui/material/TableCell';
-import TableHead from '@mui/material/TableHead';
-import TableRow from '@mui/material/TableRow';
-import { ArrowRight as ArrowRightIcon } from '@phosphor-icons/react/dist/ssr/ArrowRight';
-import dayjs from 'dayjs';
+import { format } from "date-fns"
+import ArrowRightIcon from "@heroicons/react/24/solid/ArrowRightIcon"
+import {
+  Box,
+  Button,
+  Card,
+  CardActions,
+  CardHeader,
+  Divider,
+  SvgIcon,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableRow,
+} from "@mui/material"
+import { useRouter } from "next/navigation"
 
-export interface Transaction {
-  paid_by: number;
-  paid_to: number;
-  store: number | null;
-  paid_by_type: string | null;
-  paid_to_type: string | null;
-  amount: number;
-  time_stamp: string;
+interface User {
+  id: string
+  first_name: string | null
+  last_name: string | null
+  email: string
+  user_type: string | null
+  organisation_name: string | null
 }
 
-export interface LatestOrdersProps {
-  transactions?: Transaction[];
-  sx?: SxProps;
+interface Transaction {
+  id: number
+  paid_by: string
+  paid_to: string
+  store: string | null
+  paid_by_type: string | null
+  paid_to_type: string | null
+  amount: number
+  time_stamp: string
+  transaction_type: string | null
+  paid_by_user: User | null
+  paid_to_user: User | null
 }
 
-export function LatestOrders({ transactions = [], sx }: LatestOrdersProps): React.JSX.Element {
+export const LatestOrders = ({ transactions = [], sx }: { transactions: Transaction[]; sx?: object }) => {
+  const router = useRouter()
+  const formatName = (user: User | null, type: string | null) => {
+    if (!user) return "N/A"
+    const name = [user.first_name, user.last_name].filter(Boolean).join(" ") || user.organisation_name || user.email
+    return `${name} (${type || user.user_type || "N/A"})`
+  }
+
+  const handleViewAll = () => {
+    router.push("/dashboard/transactions")
+  }
+
   return (
     <Card sx={sx}>
       <CardHeader title="Latest Transactions" />
-      <Divider />
-      <Box sx={{ overflowX: 'auto' }}>
-        <Table sx={{ minWidth: 800}}>
-          <TableHead  sx={{ backgroundColor: '#CBA328'}}>
-            <TableRow>
-              <TableCell>Paid By</TableCell>
-              <TableCell>Paid To</TableCell>
-              <TableCell>Store</TableCell>
-              <TableCell>Amount</TableCell>
-              <TableCell sortDirection="desc">Date</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {transactions.map((transaction, index) => (
-              <TableRow hover key={index}>
-                <TableCell>{`${transaction.paid_by} (${transaction.paid_by_type || 'N/A'})`}</TableCell>
-                <TableCell>{`${transaction.paid_to} (${transaction.paid_to_type || 'N/A'})`}</TableCell>
-                <TableCell>{transaction.store || 'N/A'}</TableCell>
-                <TableCell>${transaction.amount.toFixed(2)}</TableCell>
-                <TableCell>{dayjs(transaction.time_stamp).format('MMM D, YYYY HH:mm')}</TableCell>
+      <Box sx={{ overflow: "auto", maxHeight: 400 }}>
+        <Box sx={{ minWidth: 800 }}>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell>Transaction</TableCell>
+                <TableCell>Paid By</TableCell>
+                <TableCell>Paid To</TableCell>
+                <TableCell sortDirection="desc">Date</TableCell>
+                <TableCell>Amount</TableCell>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHead>
+            <TableBody>
+              {transactions.map((transaction) => {
+                const createdAt = format(new Date(transaction.time_stamp), "dd/MM/yyyy")
+
+                return (
+                  <TableRow hover key={transaction.id}>
+                    <TableCell>{transaction.id}</TableCell>
+                    <TableCell>{formatName(transaction.paid_by_user, transaction.paid_by_type)}</TableCell>
+                    <TableCell>{formatName(transaction.paid_to_user, transaction.paid_to_type)}</TableCell>
+                    <TableCell>{createdAt}</TableCell>
+                    <TableCell>{transaction.amount.toFixed(2)}</TableCell>
+                  </TableRow>
+                )
+              })}
+            </TableBody>
+          </Table>
+        </Box>
       </Box>
       <Divider />
-      <CardActions sx={{ justifyContent: 'flex-end' }}>
-        <Link href="/dashboard/transactions" passHref>
-          <Button
-            color="inherit"
-            endIcon={<ArrowRightIcon fontSize="var(--icon-fontSize-md)" />}
-            size="small"
-            variant="text"
-          >
-            View all transactions
-          </Button>
-        </Link>
+      <CardActions sx={{ justifyContent: "flex-end" }}>
+        <Button
+          color="inherit"
+          endIcon={
+            <SvgIcon fontSize="small">
+              <ArrowRightIcon />
+            </SvgIcon>
+          }
+          size="small"
+          variant="text"
+          onClick={handleViewAll}
+        >
+          View all
+        </Button>
       </CardActions>
     </Card>
-  );
+  )
 }
+

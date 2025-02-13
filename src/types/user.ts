@@ -3,6 +3,7 @@ export interface User {
   name?: string;
   avatar?: string;
   email?: string;
+  user_type: string;
 
   [key: string]: unknown;
 }

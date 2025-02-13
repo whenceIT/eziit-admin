@@ -1,5 +1,7 @@
 'use client';
 
+//latest changes 
+import { AuthGuard } from "@/components/auth/auth-guard"
 import * as React from 'react';
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';

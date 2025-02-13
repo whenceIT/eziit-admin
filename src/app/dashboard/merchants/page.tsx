@@ -7,7 +7,6 @@ import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import { Plus as PlusIcon } from '@phosphor-icons/react';
 import Head from 'next/head';
-
 import { config } from '@/config';
 import { MerchantsFilters } from '@/components/dashboard/merchant/merchants-filters';
 import { MerchantsTable, Merchant } from '@/components/dashboard/merchant/merchants-table';
@@ -21,7 +20,7 @@ export default function Page(): React.JSX.Element {
 
   const fetchMerchants = useCallback(async () => {
     try {
-      const response = await fetch('https://ezitt.whencefinancesystem.com/merchants'); // Updated to the external API
+      const response = await fetch('https://ezitt.whencefinancesystem.com/merchants'); 
       if (!response.ok) {
         throw new Error('Network response was not ok');
       }
@@ -79,8 +78,6 @@ export default function Page(): React.JSX.Element {
       <Head>
         <title>{`Merchants | Dashboard | ${config.site.name}`}</title>
       </Head>
-    {/**space between header and title */}
-    
 
       <Stack spacing={3}>
         <Stack direction="row" spacing={3}>
@@ -88,11 +85,11 @@ export default function Page(): React.JSX.Element {
             <Typography variant="h4">Merchants</Typography>
             <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
               <Button 
-                color={activeFilter === 'active' ? 'primary' : 'inherit'}
-                variant={activeFilter === 'active' ? 'contained' : 'outlined'}
-                onClick={() => handleFilter('active')}
+                color={activeFilter === 'approved' ? 'primary' : 'inherit'}
+                variant={activeFilter === 'approved' ? 'contained' : 'outlined'}
+                onClick={() => handleFilter('approved')}
               >
-                Active
+                Approved
               </Button>
               <Button 
                 color={activeFilter === 'pending' ? 'primary' : 'inherit'}
@@ -100,6 +97,13 @@ export default function Page(): React.JSX.Element {
                 onClick={() => handleFilter('pending')}
               >
                 Pending
+              </Button>
+              <Button 
+                color={activeFilter === 'declined' ? 'primary' : 'inherit'}
+                variant={activeFilter === 'declined' ? 'contained' : 'outlined'}
+                onClick={() => handleFilter('declined')}
+              >
+                Declined
               </Button>
               {activeFilter && (
                 <Button 
@@ -135,3 +139,4 @@ export default function Page(): React.JSX.Element {
 function applyPagination(rows: Merchant[], page: number, rowsPerPage: number): Merchant[] {
   return rows.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 }
+

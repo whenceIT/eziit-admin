@@ -1,125 +1,123 @@
-'use client';
-
-import * as React from 'react';
-import Avatar from '@mui/material/Avatar';
-import Box from '@mui/material/Box';
-import Card from '@mui/material/Card';
-import Checkbox from '@mui/material/Checkbox';
-import Divider from '@mui/material/Divider';
-import Stack from '@mui/material/Stack';
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableCell from '@mui/material/TableCell';
-import TableHead from '@mui/material/TableHead';
-import TablePagination from '@mui/material/TablePagination';
-import TableRow from '@mui/material/TableRow';
-import Typography from '@mui/material/Typography';
-import dayjs from 'dayjs';
-
-import { useSelection } from '@/hooks/use-selection';
-
-function noop(): void {
-  // do nothing
-}
+import React from 'react';
+import {
+  Box,
+  Card,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TablePagination,
+  TableRow,
+  Paper,
+  Chip,
+  Button,
+} from '@mui/material';
+import { useRouter } from 'next/navigation';
 
 export interface Employer {
   id: number;
-  user_id: number | null; 
-  //name: string;
-  merchants: string | null;
-  employees: string | null;
-  transactions: string | null;
+  user_id: number;
+  transactions: string;
+  merchants: string;
+  employees: string;
+  status: string;
 }
 
 interface EmployersTableProps {
-  count?: number;
-  page?: number;
-  rows?: Employer[];
-  rowsPerPage?: number;
+  count: number;
+  items: Employer[];
+  onPageChange: (event: unknown, newPage: number) => void;
+  onRowsPerPageChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  page: number;
+  rowsPerPage: number;
 }
 
-export function EmployersTable({
-  count = 0,
-  rows = [],
-  page = 0,
-  rowsPerPage = 0,
-}: EmployersTableProps): React.JSX.Element {
-  const rowIds = React.useMemo(() => {
-    return rows.map((employer) => employer.id);
-  }, [rows]);
+export const EmployersTable: React.FC<EmployersTableProps> = ({
+  count,
+  items,
+  onPageChange,
+  onRowsPerPageChange,
+  page,
+  rowsPerPage,
+}) => {
+  const router = useRouter();
 
-  const { selectAll, deselectAll, selectOne, deselectOne, selected } = useSelection(rowIds);
+  const getStatusColor = (status: string) => {
+    if (!status) return "default"
+    switch (status.toLowerCase()) {
+      case 'active':
+        return 'success';
+      case 'pending':
+        return 'warning';
+      case 'declined':
+        return 'error';
+      default:
+        return 'default';
+    }
+  };
 
-  const selectedSome = (selected?.size ?? 0) > 0 && (selected?.size ?? 0) < rows.length;
-  const selectedAll = rows.length > 0 && selected?.size === rows.length;
+  const handleDetailsClick = (employerId: number) => {
+    router.push(`/dashboard/employers/${employerId}`);
+  };
 
   return (
     <Card>
-      <Box sx={{ overflowX: 'auto' }}>
-        <Table sx={{ minWidth: '800px' }}>
+      <TableContainer component={Paper}>
+        <Table sx={{ minWidth: 800 }} aria-label="employers table">
           <TableHead>
             <TableRow>
-              <TableCell padding="checkbox">
-                <Checkbox
-                  checked={selectedAll}
-                  indeterminate={selectedSome}
-                  onChange={(event) => {
-                    if (event.target.checked) {
-                      selectAll();
-                    } else {
-                      deselectAll();
-                    }
-                  }}
-                />
-              </TableCell>
-              <TableCell>ID</TableCell>
-              <TableCell>User ID</TableCell>
-              {/*<TableCell>Name</TableCell>*/}
+              <TableCell>Id</TableCell>
+              <TableCell>User Id</TableCell>
               <TableCell>Employees</TableCell>
-              <TableCell>Transactions</TableCell>
+              
               <TableCell>Merchants</TableCell>
+              <TableCell>Transactions</TableCell>
+              <TableCell>Status</TableCell>
+              <TableCell>Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {rows.map((row) => {
-              const isSelected = selected?.has(row.id);
+            {items.map((employer) => (
+              <TableRow hover key={employer.id}>
+                <TableCell>{employer.id}</TableCell>
+                <TableCell>{employer.user_id}</TableCell>
 
-              return (
-                <TableRow hover key={row.id} selected={isSelected}>
-                  <TableCell padding="checkbox">
-                    <Checkbox
-                      checked={isSelected}
-                      onChange={(event) => {
-                        if (event.target.checked) {
-                          selectOne(row.id);
-                        } else {
-                          deselectOne(row.id);
-                        }
-                      }}
-                    />
-                  </TableCell>
-                  <TableCell>{row.id}</TableCell>
-                  <TableCell>{row.user_id ?? 'N/A'}</TableCell>
-                  {/*<TableCell>{row.name ?? 'N/A'}</TableCell>*/}
-                  <TableCell>{row.employees ?? 'N/A'}</TableCell>
-                  <TableCell>{row.transactions ?? 'N/A'}</TableCell>
-                  <TableCell>{row.merchants ?? 'N/A'}</TableCell>
-                </TableRow>
-              );
-            })}
+                <TableCell>{employer.employees}</TableCell>
+                <TableCell>{employer.merchants}</TableCell>
+                <TableCell>{employer.transactions}</TableCell>
+                <TableCell>
+                  <Chip
+                    label={employer.status}
+                    color={getStatusColor(employer.status)}
+                    size="small"
+                  />
+                </TableCell>
+                <TableCell>
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    size="small"
+                    onClick={() => handleDetailsClick(employer.id)}
+                  >
+                    Details
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))}
           </TableBody>
         </Table>
-      </Box>
-      <Divider />
+      </TableContainer>
       <TablePagination
         component="div"
         count={count}
-        onPageChange={noop}
-        onRowsPerPageChange={noop}
+        onPageChange={onPageChange}
+        onRowsPerPageChange={onRowsPerPageChange}
         page={page}
         rowsPerPage={rowsPerPage}
         rowsPerPageOptions={[5, 10, 25]}
       />
     </Card>
   );
-}
+};
+

@@ -21,7 +21,7 @@ export default function Layout({ children }: LayoutProps): React.JSX.Element {
         <LocalizationProvider>
           <UserProvider>
             <ThemeProvider>
-            <AuthWrapper>{children}</AuthWrapper>
+            {children}
             </ThemeProvider>
           </UserProvider>
         </LocalizationProvider>

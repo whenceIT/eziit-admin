@@ -11,7 +11,9 @@ import {
   TableRow,
   Paper,
   Chip,
+  Button,
 } from '@mui/material';
+import { useRouter } from 'next/navigation';
 
 export interface Merchant {
   id: number;
@@ -43,15 +45,23 @@ export const MerchantsTable: React.FC<MerchantsTableProps> = ({
   page,
   rowsPerPage,
 }) => {
+  const router = useRouter();
+
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
       case 'active':
         return 'success';
       case 'pending':
         return 'warning';
+      case 'declined':
+        return 'error';
       default:
         return 'default';
     }
+  };
+
+  const handleDetailsClick = (merchantId: number) => {
+    router.push(`/dashboard/merchants/${merchantId}`);
   };
 
   return (
@@ -68,6 +78,7 @@ export const MerchantsTable: React.FC<MerchantsTableProps> = ({
               <TableCell>Clients</TableCell>
               <TableCell>Employers</TableCell>
               <TableCell>Status</TableCell>
+              <TableCell>Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -87,6 +98,16 @@ export const MerchantsTable: React.FC<MerchantsTableProps> = ({
                     size="small"
                   />
                 </TableCell>
+                <TableCell>
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    size="small"
+                    onClick={() => handleDetailsClick(merchant.id)}
+                  >
+                    Details
+                  </Button>
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>
@@ -104,3 +125,4 @@ export const MerchantsTable: React.FC<MerchantsTableProps> = ({
     </Card>
   );
 };
+
