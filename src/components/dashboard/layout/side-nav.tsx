@@ -1,7 +1,7 @@
 "use client"
 
 import React from "react"
-import type * as React from "react"
+//import type * as React from "react"
 import RouterLink from "next/link"
 import { usePathname } from "next/navigation"
 import Box from "@mui/material/Box"
@@ -18,10 +18,14 @@ import { useUser } from "@/hooks/use-user"
 import { adminNavItems, merchantNavItems } from "./config"
 import { navIcons } from "./nav-icons"
 
-export function SideNav(): React.JSX.Element {
+interface SideNavProps {
+  userType: string; 
+}
+
+export function SideNav({ userType }: SideNavProps): React.JSX.Element {
   const pathname = usePathname()
   const { user } = useUser()
-  const navItems = user?.user_type === "merchant" ? merchantNavItems : adminNavItems
+  const navItems = userType === "merchant" ? merchantNavItems : adminNavItems
 
   return (
     <Box
@@ -156,7 +160,12 @@ function NavItem({ disabled, external, href, icon, matcher, pathname, title, ite
         </Box>
         {items && (open ? <CaretUp size={16} weight="bold" /> : <CaretDown size={16} weight="bold" />)}
       </Box>
-      {items && (
+      
+    </li>
+  )
+}
+
+/*line 163*{items && (
         <Collapse in={open} timeout="auto" unmountOnExit>
           <Stack component="ul" spacing={1} sx={{ listStyle: "none", m: 0, p: 0, pl: 2 }}>
             {items.map((item) => (
@@ -164,8 +173,4 @@ function NavItem({ disabled, external, href, icon, matcher, pathname, title, ite
             ))}
           </Stack>
         </Collapse>
-      )}
-    </li>
-  )
-}
-
+      )} */

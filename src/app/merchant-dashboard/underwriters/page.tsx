@@ -31,8 +31,16 @@ const columns: Column[] = [
   { id: "status", label: "Status", minWidth: 100 },
 ]
 
+interface Underwriter {
+  id: string
+  name: string
+  company: string
+  assignedClients: number
+  status: string
+}
+
 export default function MerchantUnderwriters(): React.JSX.Element {
-  const [underwriters, setUnderwriters] = React.useState([])
+  const [underwriters, setUnderwriters] = React.useState<Underwriter[]>([])
   const [loading, setLoading] = React.useState(true)
   const [error, setError] = React.useState<string | null>(null)
   const [page, setPage] = React.useState(0)
@@ -41,7 +49,7 @@ export default function MerchantUnderwriters(): React.JSX.Element {
 
   React.useEffect(() => {
     if (user) {
-      fetch(`https://api.example.com/underwriters?merchantId=${user.id}`)
+      fetch(`https://ezitt.whencefinancesystem.com/underwriters?merchantId=${user.id}`)
         .then((response) => {
           if (!response.ok) {
             throw new Error("Failed to fetch underwriters")
@@ -83,7 +91,7 @@ export default function MerchantUnderwriters(): React.JSX.Element {
         <Typography variant="h4" gutterBottom>
           Underwriters
         </Typography>
-        <Paper sx={{ width: "100%", overflow: "hidden" }}>
+        <Paper sx={{ width: "100%", overflow: "hidden" }} >
           <TableContainer sx={{ maxHeight: 440 }}>
             <Table stickyHeader aria-label="sticky table">
               <TableHead>
@@ -127,4 +135,3 @@ export default function MerchantUnderwriters(): React.JSX.Element {
     </Grid>
   )
 }
-

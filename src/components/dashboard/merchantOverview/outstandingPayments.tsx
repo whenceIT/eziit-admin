@@ -28,9 +28,11 @@ export interface OutstandingProps {
   diff?: number;
   trend: 'up' | 'down';
   sx?: SxProps;
+  value: number; // The value prop to be displayed
+  title: string; // The title prop to be displayed
 }
 
-export function Outstanding({ diff, trend, sx }: OutstandingProps): React.JSX.Element {
+export function Outstanding({ diff, trend, sx, value, title }: OutstandingProps): React.JSX.Element {
   const [totalFees, setTotalFees] = React.useState<number | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
@@ -40,7 +42,7 @@ export function Outstanding({ diff, trend, sx }: OutstandingProps): React.JSX.El
       try {
         const transactions = await fetchTransactions();
         const fees = transactions.reduce((total, transaction) => {
-          //change based on fee percentage 
+          //change based on fee percentage
           return total + (transaction.amount * 0.05);
         }, 0);
         setTotalFees(fees);
@@ -65,14 +67,14 @@ export function Outstanding({ diff, trend, sx }: OutstandingProps): React.JSX.El
           <Stack direction="row" sx={{ alignItems: 'flex-start', justifyContent: 'space-between' }} spacing={3}>
             <Stack spacing={1}>
               <Typography color="text.secondary" variant="overline">
-                Outstanding Payments
+                {title} {/* Display dynamic title */}
               </Typography>
               {loading ? (
                 <CircularProgress size={24} />
               ) : error ? (
                 <Typography color="error" variant="body2">{error}</Typography>
               ) : (
-                <Typography variant="h4">K{totalFees?.toFixed(2)}</Typography>
+                <Typography variant="h4">K{value?.toFixed(2)}</Typography>
               )}
             </Stack>
             <Avatar sx={{ backgroundColor: '#CBA328', height: '56px', width: '56px' }}>

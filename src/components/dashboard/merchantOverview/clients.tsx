@@ -43,6 +43,7 @@ export interface TotalCustomersProps {
   diff?: number
   trend: "up" | "down"
   sx?: SxProps
+  title: string;
 }
 
 export function TotalCustomers({ diff, trend, sx }: TotalCustomersProps): React.JSX.Element {

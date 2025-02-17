@@ -68,9 +68,9 @@ export default function Layout({ children }: LayoutProps): React.JSX.Element {
           minHeight: '100%',
         }}
       >
-        <SideNav />
+        <SideNav userType={user?.user_type || ''}/>
         <Box sx={{ display: 'flex', flex: '1 1 auto', flexDirection: 'column', pl: { lg: 'var(--SideNav-width)' } }}>
-          <MainNav />
+          <MainNav userType={user?.user_type || ''}/>
           <main>
             <Container maxWidth="xl" sx={{ py: '16px' }}>
               {children}

@@ -18,6 +18,7 @@ import { Chart } from '@/components/core/chart';
 export interface SalesProps {
   chartSeries: { name: string; data: number[] }[];
   sx?: SxProps;
+  title: string;
 }
 
 export function Sales({ chartSeries, sx }: SalesProps): React.JSX.Element {

@@ -18,7 +18,7 @@ import Typography from '@mui/material/Typography';
 import { useSelection } from '@/hooks/use-selection';
 
 function noop(): void {
-  // do nothing
+  // do nothng
 }
 
 export interface Client {
@@ -31,6 +31,7 @@ export interface Client {
   employer: string | null;
   ratings: number | null;
   comments: string | null;
+  status: 'approved' | 'pending' | 'declined';
 }
 
 interface ClientsTableProps {
@@ -38,6 +39,8 @@ interface ClientsTableProps {
   page?: number;
   rows?: Client[];
   rowsPerPage?: number;
+  onPageChange: (event: unknown, newPage: number) => void;
+  onRowsPerPageChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
 export function ClientsTable({

@@ -29,6 +29,7 @@ export interface Transaction {
 export interface LatestOrdersProps {
   transactions?: Transaction[];
   sx?: SxProps;
+  title: string;
 }
 
 export function LatestOrders({ transactions = [], sx }: LatestOrdersProps): React.JSX.Element {

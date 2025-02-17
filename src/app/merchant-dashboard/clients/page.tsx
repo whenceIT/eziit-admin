@@ -1,5 +1,5 @@
 "use client"
-
+//
 import * as React from "react"
 import Grid from "@mui/material/Unstable_Grid2"
 import Typography from "@mui/material/Typography"
@@ -31,16 +31,19 @@ const columns: Column[] = [
   { id: "status", label: "Status", minWidth: 100 },
 ]
 
-interface Client {
+export interface MerchantClient {
   id: number
   name: string
   email: string
   phone: string
   status: string
+  float?: number 
+  employer?: string 
+  ratings?: number 
 }
 
 export default function MerchantClients(): React.JSX.Element {
-  const [clients, setClients] = React.useState<Client[]>([])
+  const [clients, setClients] = React.useState<MerchantClient[]>([])
   const [loading, setLoading] = React.useState(true)
   const [error, setError] = React.useState<string | null>(null)
   const [page, setPage] = React.useState(0)

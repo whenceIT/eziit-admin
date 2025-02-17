@@ -69,9 +69,10 @@ export default function MerchantDashboardLayout({ children }: LayoutProps): Reac
           minHeight: "100%",
         }}
       >
-        <SideNav />
+         
+        <SideNav userType={user?.user_type || ''}/>
         <Box sx={{ display: "flex", flex: "1 1 auto", flexDirection: "column", pl: { lg: "var(--SideNav-width)" } }}>
-          <MainNav />
+          <MainNav userType={user?.user_type || ''}/>
           <main>
             <Container maxWidth="xl" sx={{ py: "16px" }}>
               {children}

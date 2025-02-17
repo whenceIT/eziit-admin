@@ -28,6 +28,7 @@ export interface ProcessedProps {
   diff?: number;
   trend: 'up' | 'down';
   sx?: SxProps;
+  title: string;
 }
 
 export function Processed({ diff, trend, sx }: ProcessedProps): React.JSX.Element {

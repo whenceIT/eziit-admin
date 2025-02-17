@@ -61,7 +61,7 @@ export default function MerchantDashboard(): React.JSX.Element {
           setLoading(false);
         });
     }
-  }, [user]);
+  }, [user]); //
 
   return (
     <Grid container spacing={3}>
@@ -72,7 +72,7 @@ export default function MerchantDashboard(): React.JSX.Element {
         <TotalEmployers diff={16} trend="down" sx={{ height: '100%' }} title="Number of Employers" />
       </Grid>
       <Grid lg={3} sm={6} xs={12}>
-        <Outstanding sx={{ height: '100%' }} value={75.5} title="Outstanding Payments" />
+        <Outstanding sx={{ height: '100%' }} value={0} title="Outstanding Payments" trend="up"/>
       </Grid>
       <Grid lg={3} sm={6} xs={12}>
         <Processed diff={12} trend="up" sx={{ height: '100%' }} title="Processed Payments" />
@@ -93,7 +93,7 @@ export default function MerchantDashboard(): React.JSX.Element {
         ) : error ? (
           <Alert severity="error">{error}</Alert>
         ) : (
-          <LatestOrders transactions={transactions} sx={{ height: '100%' }} />
+          <LatestOrders transactions={transactions} sx={{ height: '100%' }} title="Latest Transactions" />
         )}
       </Grid>
     </Grid>

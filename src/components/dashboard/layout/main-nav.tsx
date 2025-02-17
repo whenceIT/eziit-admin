@@ -13,7 +13,11 @@ import { useUser } from "@/hooks/use-user"
 import { MobileNav } from "./mobile-nav"
 import { UserPopover } from "./user-popover"
 
-export function MainNav(): React.JSX.Element {
+interface MainNavProps {
+  userType: string; 
+}
+
+export function MainNav({ userType }: MainNavProps): React.JSX.Element {
   const [openNav, setOpenNav] = React.useState<boolean>(false)
   const userPopover = usePopover<HTMLDivElement>()
   const { user } = useUser()

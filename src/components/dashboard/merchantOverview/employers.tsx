@@ -28,6 +28,7 @@ export interface TotalEmployersProps {
   diff?: number;
   trend: 'up' | 'down';
   sx?: SxProps;
+  title: string;
 }
 
 export function TotalEmployers({ diff, trend, sx }: TotalEmployersProps): React.JSX.Element {

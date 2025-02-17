@@ -16,8 +16,15 @@ import Alert from "@mui/material/Alert"
 
 import { useUser } from "@/hooks/use-user"
 
+interface Employer {
+  id: string | number
+  name: string
+  employees: number
+  status: string
+}
+
 interface Column {
-  id: "id" | "name" | "industry" | "employees" | "status"
+  id: "id" | "name" | "employees" | "status"
   label: string
   minWidth?: number
   align?: "right"
@@ -26,13 +33,13 @@ interface Column {
 const columns: Column[] = [
   { id: "id", label: "Employer ID", minWidth: 100 },
   { id: "name", label: "Company Name", minWidth: 170 },
-  { id: "industry", label: "Industry", minWidth: 170 },
+  //{ id: "industry", label: "Industry", minWidth: 170 },
   { id: "employees", label: "Number of Employees", minWidth: 100, align: "right" },
   { id: "status", label: "Status", minWidth: 100 },
 ]
 
 export default function MerchantEmployers(): React.JSX.Element {
-  const [employers, setEmployers] = React.useState([])
+  const [employers, setEmployers] = React.useState<Employer[]>([])
   const [loading, setLoading] = React.useState(true)
   const [error, setError] = React.useState<string | null>(null)
   const [page, setPage] = React.useState(0)
@@ -41,7 +48,7 @@ export default function MerchantEmployers(): React.JSX.Element {
 
   React.useEffect(() => {
     if (user) {
-      fetch(`https://api.example.com/employers?merchantId=${user.id}`)
+      fetch(`https://ezitt.whencefinancesystem.com/employers?merchantId=${user.id}`)
         .then((response) => {
           if (!response.ok) {
             throw new Error("Failed to fetch employers")

@@ -1,45 +1,54 @@
-"use client"
+'use client'
 
-import * as React from "react"
-import Grid from "@mui/material/Unstable_Grid2"
-import Typography from "@mui/material/Typography"
-import Paper from "@mui/material/Paper"
-import Table from "@mui/material/Table"
-import TableBody from "@mui/material/TableBody"
-import TableCell from "@mui/material/TableCell"
-import TableContainer from "@mui/material/TableContainer"
-import TableHead from "@mui/material/TableHead"
-import TablePagination from "@mui/material/TablePagination"
-import TableRow from "@mui/material/TableRow"
-import CircularProgress from "@mui/material/CircularProgress"
-import Alert from "@mui/material/Alert"
+import * as React from 'react'
+import Grid from '@mui/material/Unstable_Grid2'
+import Typography from '@mui/material/Typography'
+import Paper from '@mui/material/Paper'
+import Table from '@mui/material/Table'
+import TableBody from '@mui/material/TableBody'
+import TableCell from '@mui/material/TableCell'
+import TableContainer from '@mui/material/TableContainer'
+import TableHead from '@mui/material/TableHead'
+import TablePagination from '@mui/material/TablePagination'
+import TableRow from '@mui/material/TableRow'
+import CircularProgress from '@mui/material/CircularProgress'
+import Alert from '@mui/material/Alert'
 
-import { useUser } from "@/hooks/use-user"
+import { useUser } from '@/hooks/use-user'
+
+// Define the shape of a transaction
+interface Transaction {
+  id: string | number;  // Ensure 'id' is a valid type (string or number)
+  date: string;
+  clientName: string;
+  amount: number;
+  status: string;
+}
 
 interface Column {
-  id: "id" | "date" | "clientName" | "amount" | "status"
+  id: 'id' | 'date' | 'clientName' | 'amount' | 'status'
   label: string
   minWidth?: number
-  align?: "right"
+  align?: 'right'
   format?: (value: number) => string
 }
 
 const columns: Column[] = [
-  { id: "id", label: "Transaction ID", minWidth: 100 },
-  { id: "date", label: "Date", minWidth: 100 },
-  { id: "clientName", label: "Client Name", minWidth: 170 },
+  { id: 'id', label: 'Transaction ID', minWidth: 100 },
+  { id: 'date', label: 'Date', minWidth: 100 },
+  { id: 'clientName', label: 'Client Name', minWidth: 170 },
   {
-    id: "amount",
-    label: "Amount",
+    id: 'amount',
+    label: 'Amount',
     minWidth: 170,
-    align: "right",
-    format: (value: number) => value.toLocaleString("en-US", { style: "currency", currency: "USD" }),
+    align: 'right',
+    format: (value: number) => value.toLocaleString('en-US', { style: 'currency', currency: 'USD' }),
   },
-  { id: "status", label: "Status", minWidth: 100 },
+  { id: 'status', label: 'Status', minWidth: 100 },
 ]
 
 export default function MerchantTransactions(): React.JSX.Element {
-  const [transactions, setTransactions] = React.useState([])
+  const [transactions, setTransactions] = React.useState<Transaction[]>([])  // Specify the type of the state as Transaction[]
   const [loading, setLoading] = React.useState(true)
   const [error, setError] = React.useState<string | null>(null)
   const [page, setPage] = React.useState(0)
@@ -48,10 +57,10 @@ export default function MerchantTransactions(): React.JSX.Element {
 
   React.useEffect(() => {
     if (user) {
-      fetch(`https://api.example.com/transactions?merchantId=${user.id}`)
+      fetch(`https://ezitt.whencefinancesystem.com/transactions?merchantId=${user.id}`)
         .then((response) => {
           if (!response.ok) {
-            throw new Error("Failed to fetch transactions")
+            throw new Error('Failed to fetch transactions')
           }
           return response.json()
         })
@@ -60,8 +69,8 @@ export default function MerchantTransactions(): React.JSX.Element {
           setLoading(false)
         })
         .catch((err) => {
-          console.error("Error fetching transactions:", err)
-          setError("Failed to load transactions. Please try again later.")
+          console.error('Error fetching transactions:', err)
+          setError('Failed to load transactions. Please try again later.')
           setLoading(false)
         })
     }
@@ -90,7 +99,7 @@ export default function MerchantTransactions(): React.JSX.Element {
         <Typography variant="h4" gutterBottom>
           Transactions
         </Typography>
-        <Paper sx={{ width: "100%", overflow: "hidden" }}>
+        <Paper sx={{ width: '100%', overflow: 'hidden' }}>
           <TableContainer sx={{ maxHeight: 440 }}>
             <Table stickyHeader aria-label="sticky table">
               <TableHead>
@@ -110,7 +119,7 @@ export default function MerchantTransactions(): React.JSX.Element {
                         const value = transaction[column.id]
                         return (
                           <TableCell key={column.id} align={column.align}>
-                            {column.format && typeof value === "number" ? column.format(value) : value}
+                            {column.format && typeof value === 'number' ? column.format(value) : value}
                           </TableCell>
                         )
                       })}
@@ -134,4 +143,3 @@ export default function MerchantTransactions(): React.JSX.Element {
     </Grid>
   )
 }
-

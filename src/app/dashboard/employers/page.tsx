@@ -1,4 +1,4 @@
-/*'use client';
+'use client';
 
 import * as React from 'react';
 import { useEffect, useState, useCallback } from 'react';
@@ -118,7 +118,7 @@ export default function Page(): React.JSX.Element {
           <div>
             {/*<Button startIcon={<PlusIcon fontSize="var(--icon-fontSize-md)" />} variant="contained">
               Add
-  </Button>*}
+  </Button>*/}
           </div>
         </Stack>
         <EmployersFilters />
@@ -138,4 +138,3 @@ export default function Page(): React.JSX.Element {
 function applyPagination(rows: Employer[], page: number, rowsPerPage: number): Employer[] {
   return rows.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 }
-*/

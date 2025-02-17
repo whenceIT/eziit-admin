@@ -20,6 +20,19 @@ import { useUser } from "@/hooks/use-user"
 import { adminNavItems, merchantNavItems } from "./config"
 import { navIcons } from "./nav-icons"
 
+interface MobileNavItem {
+  key: string
+  title: string
+  href: string
+  icon?: React.ReactNode
+}
+
+const navigation: MobileNavItem[] = [
+  { key: "dashboard", title: "Dashboard", href: "/dashboard" },
+  { key: "settings", title: "Settings", href: "/settings" },
+  { key: "profile", title: "Profile", href: "/profile" },
+]
+
 export interface MobileNavProps {
   onClose?: () => void
   open?: boolean
@@ -170,7 +183,12 @@ function NavItem({
         </Box>
         {items && (open ? <CaretUp size={16} weight="bold" /> : <CaretDown size={16} weight="bold" />)}
       </Box>
-      {items && (
+      
+    </li>
+  )
+}
+
+/* line 186 {items && (
         <Collapse in={open} timeout="auto" unmountOnExit>
           <Stack component="ul" spacing={1} sx={{ listStyle: "none", m: 0, p: 0, pl: 2 }}>
             {items.map((item) => (
@@ -178,8 +196,4 @@ function NavItem({
             ))}
           </Stack>
         </Collapse>
-      )}
-    </li>
-  )
-}
-
+      )}*/
