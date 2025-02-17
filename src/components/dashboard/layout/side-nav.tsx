@@ -1,31 +1,30 @@
-"use client"
+"use client";
 
-import React from "react"
-//import type * as React from "react"
-import RouterLink from "next/link"
-import { usePathname } from "next/navigation"
-import Box from "@mui/material/Box"
-import Stack from "@mui/material/Stack"
-import Typography from "@mui/material/Typography"
-import Collapse from "@mui/material/Collapse"
-import { CaretDown, CaretUp } from "@phosphor-icons/react"
-import type { NavItemConfig } from "@/types/nav"
-import { paths } from "@/paths"
-import { isNavItemActive } from "@/lib/is-nav-item-active"
-import { Logo } from "@/components/core/logo"
-import { useUser } from "@/hooks/use-user"
+import React from "react";
+import RouterLink from "next/link";
+import { usePathname } from "next/navigation";
+import Box from "@mui/material/Box";
+import Stack from "@mui/material/Stack";
+import Typography from "@mui/material/Typography";
+import Collapse from "@mui/material/Collapse";
+import { CaretDown, CaretUp } from "@phosphor-icons/react";
+import type { NavItemConfig } from "@/types/nav";
+import { paths } from "@/paths";
+import { isNavItemActive } from "@/lib/is-nav-item-active";
+import { Logo } from "@/components/core/logo";
+import { useUser } from "@/hooks/use-user";
 
-import { adminNavItems, merchantNavItems } from "./config"
-import { navIcons } from "./nav-icons"
+import { adminNavItems, merchantNavItems } from "./config";
+import { navIcons } from "./nav-icons";
 
 interface SideNavProps {
   userType: string; 
 }
 
 export function SideNav({ userType }: SideNavProps): React.JSX.Element {
-  const pathname = usePathname()
-  const { user } = useUser()
-  const navItems = userType === "merchant" ? merchantNavItems : adminNavItems
+  const pathname = usePathname();
+  const { user } = useUser();
+  const navItems = userType === "merchant" ? merchantNavItems : adminNavItems;
 
   return (
     <Box
@@ -74,40 +73,37 @@ export function SideNav({ userType }: SideNavProps): React.JSX.Element {
         {renderNavItems({ pathname, items: navItems })}
       </Box>
     </Box>
-  )
+  );
 }
 
 function renderNavItems({ items = [], pathname }: { items?: NavItemConfig[]; pathname: string }): React.JSX.Element {
   const children = items.reduce((acc: React.ReactNode[], curr: NavItemConfig): React.ReactNode[] => {
-    const { key, ...item } = curr
-
-    acc.push(<NavItem key={key} pathname={pathname} {...item} />)
-
-    return acc
-  }, [])
+    acc.push(<NavItem pathname={pathname} {...curr} />);
+    return acc;
+  }, []);
 
   return (
     <Stack component="ul" spacing={1} sx={{ listStyle: "none", m: 0, p: 0 }}>
       {children}
     </Stack>
-  )
+  );
 }
 
 interface NavItemProps extends Omit<NavItemConfig, "items"> {
-  pathname: string
-  items?: NavItemConfig[]
+  pathname: string;
+  items?: NavItemConfig[];
 }
 
 function NavItem({ disabled, external, href, icon, matcher, pathname, title, items }: NavItemProps): React.JSX.Element {
-  const [open, setOpen] = React.useState(false)
-  const active = isNavItemActive({ disabled, external, href, matcher, pathname })
-  const Icon = icon ? navIcons[icon] : null
+  const [open, setOpen] = React.useState(false);
+  const active = isNavItemActive({ disabled, external, href, matcher, pathname });
+  const Icon = icon ? navIcons[icon] : null;
 
   const handleClick = () => {
     if (items) {
-      setOpen(!open)
+      setOpen(!open);
     }
-  }
+  };
 
   return (
     <li>
@@ -160,17 +156,15 @@ function NavItem({ disabled, external, href, icon, matcher, pathname, title, ite
         </Box>
         {items && (open ? <CaretUp size={16} weight="bold" /> : <CaretDown size={16} weight="bold" />)}
       </Box>
-      
-    </li>
-  )
-}
-
-/*line 163*{items && (
+      {items && (
         <Collapse in={open} timeout="auto" unmountOnExit>
           <Stack component="ul" spacing={1} sx={{ listStyle: "none", m: 0, p: 0, pl: 2 }}>
             {items.map((item) => (
-              <NavItem key={item.key} pathname={pathname} {...item} />
+              <NavItem pathname={pathname} {...item} />
             ))}
           </Stack>
         </Collapse>
-      )} */
+      )}
+    </li>
+  );
+}

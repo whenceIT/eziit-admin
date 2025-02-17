@@ -20,18 +20,8 @@ import { useUser } from "@/hooks/use-user"
 import { adminNavItems, merchantNavItems } from "./config"
 import { navIcons } from "./nav-icons"
 
-interface MobileNavItem {
-  key: string
-  title: string
-  href: string
-  icon?: React.ReactNode
-}
 
-const navigation: MobileNavItem[] = [
-  { key: "dashboard", title: "Dashboard", href: "/dashboard" },
-  { key: "settings", title: "Settings", href: "/settings" },
-  { key: "profile", title: "Profile", href: "/profile" },
-]
+
 
 export interface MobileNavProps {
   onClose?: () => void
@@ -89,9 +79,9 @@ function renderNavItems({
   onClose,
 }: { items?: NavItemConfig[]; pathname: string; onClose?: () => void }): React.JSX.Element {
   const children = items.reduce((acc: React.ReactNode[], curr: NavItemConfig): React.ReactNode[] => {
-    const { key, ...item } = curr
+    
 
-    acc.push(<NavItem key={key} pathname={pathname} onClose={onClose} {...item} />)
+    acc.push(<NavItem pathname={pathname} onClose={onClose} {...curr} />)
 
     return acc
   }, [])
@@ -183,17 +173,17 @@ function NavItem({
         </Box>
         {items && (open ? <CaretUp size={16} weight="bold" /> : <CaretDown size={16} weight="bold" />)}
       </Box>
-      
+      {items && (
+        <Collapse in={open} timeout="auto" unmountOnExit>
+          <Stack component="ul" spacing={1} sx={{ listStyle: "none", m: 0, p: 0, pl: 2 }}>
+            {items.map((item) => (
+              <NavItem pathname={pathname} onClose={onClose} {...item} />
+            ))}
+          </Stack>
+        </Collapse>
+      )}
     </li>
   )
 }
 
-/* line 186 {items && (
-        <Collapse in={open} timeout="auto" unmountOnExit>
-          <Stack component="ul" spacing={1} sx={{ listStyle: "none", m: 0, p: 0, pl: 2 }}>
-            {items.map((item) => (
-              <NavItem key={item.key} pathname={pathname} onClose={onClose} {...item} />
-            ))}
-          </Stack>
-        </Collapse>
-      )}*/
+/* line 186 */

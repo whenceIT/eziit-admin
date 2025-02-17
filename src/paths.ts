@@ -16,7 +16,7 @@ export const paths = {
       employers: "/dashboard/clients/linkedemployers",
       notLinked: "/dashboard/clients/not-linked",
       linkedbyboth: "/dashboard/clients/linkedbyboth"
-    },//'/dashboard/clients',
+    },///'/dashboard/clients',
     employers: '/dashboard/employers',
     merchants: '/dashboard/merchants',
     underwriters: '/dashboard/underwriters',
