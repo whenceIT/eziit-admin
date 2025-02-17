@@ -121,7 +121,7 @@ export function SignUpForm() {
               <MenuItem value="employer">Employer</MenuItem>
               <MenuItem value="merchant">Merchant</MenuItem>
               <MenuItem value="underwriter">Underwriter</MenuItem>
-              <MenuItem value="client">Client</MenuItem>
+              
             </Select>
             {formErrors.user_type && <FormHelperText>{formErrors.user_type}</FormHelperText>}
           </FormControl>
