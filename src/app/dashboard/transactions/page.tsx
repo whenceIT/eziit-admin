@@ -167,7 +167,7 @@ export default function AllTransactions() {
                     <TableCell>{formatName(transaction.paid_by_user, transaction.paid_by_type)}</TableCell>
                     <TableCell>{formatName(transaction.paid_to_user, transaction.paid_to_type)}</TableCell>
                     <TableCell>{transaction.store || "N/A"}</TableCell>
-                    <TableCell>${transaction.amount?.toFixed(2) ?? "N/A"}</TableCell>
+                    <TableCell>{transaction.amount?.toFixed(2) ?? "N/A"}</TableCell>
                     <TableCell>{transaction.transaction_type || "N/A"}</TableCell>
                     <TableCell>
                       {transaction.time_stamp ? dayjs(transaction.time_stamp).format("MMM D, YYYY HH:mm") : "N/A"}
