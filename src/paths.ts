@@ -8,7 +8,7 @@ export const paths = {
     merchantClients: "/merchant-dashboard/clients",
     merchantEmployers: "/merchant-dashboard/employers",
     merchantUnderwriters: "/merchant-dashboard/underwriters",
-    //merchantStores: "/merchant-dashboard/stores",
+    merchantStores: "/merchant-dashboard/stores",
     account: '/dashboard/account',
     clients: {
       index: "/dashboard/clients",
@@ -18,7 +18,13 @@ export const paths = {
       linkedbyboth: "/dashboard/clients/linkedbyboth"
     },///'/dashboard/clients',
     employers: '/dashboard/employers',
-    merchants: '/dashboard/merchants',
+
+    merchants: {
+    index: "/dashboard/merchants",
+    viewmerchants: "/dashboard/merchants/viewmerchants",
+    pendingunderwriterapproval: "/dashboard/merchants/pendingunderwriterapproval"
+    },
+
     underwriters: '/dashboard/underwriters',
     stores: '/dashboard/stores',
     reports: {
@@ -27,7 +33,7 @@ export const paths = {
       merchantreports: "/dashboard/reports/merchant-reports",
       underwriterreports: "/dashboard/reports/underwriter-reports",
       transactionreports: "/dashboard/reports/transaction-reports",
-      organizationreports: "/dashboard/reports/organization-reports"
+      employerreports: "/dashboard/reports/employer-reports"
     },
     statistics: '/dashboard/statistics',
     //integrations: '/dashboard/integrations',

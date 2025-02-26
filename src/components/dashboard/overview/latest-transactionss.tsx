@@ -1,3 +1,7 @@
+"use client"
+
+import type React from "react"
+
 import { format } from "date-fns"
 import ArrowRightIcon from "@heroicons/react/24/solid/ArrowRightIcon"
 import {
@@ -5,7 +9,6 @@ import {
   Button,
   Card,
   CardActions,
-  CardHeader,
   Divider,
   SvgIcon,
   Table,
@@ -39,7 +42,12 @@ interface Transaction {
   paid_to_user: User | null
 }
 
-export const LatestOrders = ({ transactions = [], sx }: { transactions: Transaction[]; sx?: object }) => {
+interface LatestOrdersProps {
+  transactions: Transaction[]
+  sx?: React.CSSProperties
+}
+
+export function LatestOrders({ transactions, sx }: LatestOrdersProps) {
   const router = useRouter()
   const formatName = (user: User | null, type: string | null) => {
     if (!user) return "N/A"
@@ -53,7 +61,9 @@ export const LatestOrders = ({ transactions = [], sx }: { transactions: Transact
 
   return (
     <Card sx={sx}>
-      <CardHeader title="Latest Transactions" />
+      <Box sx={{ p: 3 }}>
+        <h3>Latest Transactions</h3>
+      </Box>
       <Box sx={{ overflow: "auto", maxHeight: 400 }}>
         <Box sx={{ minWidth: 800 }}>
           <Table>
@@ -97,7 +107,7 @@ export const LatestOrders = ({ transactions = [], sx }: { transactions: Transact
           variant="text"
           onClick={handleViewAll}
         >
-          View all
+          View all Transactions
         </Button>
       </CardActions>
     </Card>

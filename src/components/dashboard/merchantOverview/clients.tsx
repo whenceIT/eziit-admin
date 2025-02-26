@@ -1,92 +1,135 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import Avatar from "@mui/material/Avatar"
-import Card from "@mui/material/Card"
-import CardContent from "@mui/material/CardContent"
-import Stack from "@mui/material/Stack"
-import type { SxProps } from "@mui/material/styles"
-import Typography from "@mui/material/Typography"
-import CircularProgress from "@mui/material/CircularProgress"
-import { ArrowDown as ArrowDownIcon } from "@phosphor-icons/react/dist/ssr/ArrowDown"
-import { ArrowUp as ArrowUpIcon } from "@phosphor-icons/react/dist/ssr/ArrowUp"
-import { Users as UsersIcon } from "@phosphor-icons/react/dist/ssr/Users"
-import { useUser } from "@/hooks/use-user"
+import * as React from "react";
+import Avatar from "@mui/material/Avatar";
+import Card from "@mui/material/Card";
+import CardContent from "@mui/material/CardContent";
+import Stack from "@mui/material/Stack";
+import type { SxProps } from "@mui/material/styles";
+import Typography from "@mui/material/Typography";
+import CircularProgress from "@mui/material/CircularProgress";
+import { ArrowDown as ArrowDownIcon } from "@phosphor-icons/react/dist/ssr/ArrowDown";
+import { ArrowUp as ArrowUpIcon } from "@phosphor-icons/react/dist/ssr/ArrowUp";
+import { Users as UsersIcon } from "@phosphor-icons/react/dist/ssr/Users";
+import { useUser } from "@/hooks/use-user";
 
-interface Client {
-  id: number
-  user_id: string | null
-  // Add other relevant fields
+const API_BASE_URL = "https://ezitt.whencefinancesystem.com";
+
+interface MerchantData {
+  id: number;
+  user_id: string;
+  merchant_code: string;
+  clients: { id: number }[];
 }
 
-interface Merchant {
-  id: number
-  user_id: string | null
-  clients: Client[] | null
-  // Add other relevant fields
-}
+async function fetchMerchantClients(merchantId: number): Promise<number> {
+  try {
+    console.log("Fetching merchant details for:", merchantId);
+    const response = await fetch(`${API_BASE_URL}/merchant/${merchantId}`);
 
-async function fetchMerchantClients(merchantId: string): Promise<number> {
-  console.log("Fetching clients for merchant:", merchantId)
-  const response = await fetch(`https://ezitt.whencefinancesystem.com/merchant/${merchantId}`)
-  if (!response.ok) {
-    console.error("Failed to fetch merchant data")
-    throw new Error("Failed to fetch merchant data")
+    if (!response.ok) {
+      console.error("Failed to fetch merchant data");
+      throw new Error("Failed to fetch merchant data");
+    }
+
+    const merchant: MerchantData = await response.json();
+
+    // Ensure clients exist and count unique client IDs
+    const uniqueClients = new Set(merchant.clients.map((client) => client.id));
+
+    const clientCount = uniqueClients.size;
+    console.log("Total clients under merchant:", clientCount);
+
+    return clientCount;
+  } catch (error) {
+    console.error("Error fetching clients:", error);
+    throw new Error("Error fetching merchant clients");
   }
-  const merchantData: Merchant = await response.json()
-  const clientCount = merchantData.clients?.length || 0
-  console.log("Fetched client count:", clientCount)
-  return clientCount
 }
 
 export interface TotalCustomersProps {
-  diff?: number
-  trend: "up" | "down"
-  sx?: SxProps
+  diff?: number;
+  trend: "up" | "down";
+  sx?: SxProps;
   title: string;
 }
 
 export function TotalCustomers({ diff, trend, sx }: TotalCustomersProps): React.JSX.Element {
-  const [totalClients, setTotalClients] = React.useState<number | null>(null)
-  const [loading, setLoading] = React.useState(true)
-  const [error, setError] = React.useState<string | null>(null)
-  const { user } = useUser()
+  const [totalClients, setTotalClients] = React.useState<number | null>(null);
+  const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
+  const { user } = useUser();
 
   React.useEffect(() => {
     const countClients = async () => {
       if (!user) {
-        console.log("User object is null or undefined")
-        setError("User not authenticated")
-        setLoading(false)
-        return
+        console.log("User object is null or undefined");
+        setError("User not authenticated");
+        setLoading(false);
+        return;
       }
 
       if (user.user_type !== "merchant") {
-        console.log("User is not a merchant")
-        setError("Invalid user type")
-        setLoading(false)
-        return
+        console.log("User is not a merchant");
+        setError("Invalid user type");
+        setLoading(false);
+        return;
       }
 
       try {
-        console.log("Fetching clients for merchant ID:", user.id)
-        const count = await fetchMerchantClients(user.id)
-        setTotalClients(count)
-        setLoading(false)
+        // Step 1: Fetch merchant details using user ID
+        const merchantResponse = await fetch(`${API_BASE_URL}/merchants?user_id=${user.id}`);
+        if (!merchantResponse.ok) {
+          throw new Error(`Failed to fetch merchant details: ${merchantResponse.statusText}`);
+        }
+        const merchantData = await merchantResponse.json();
+        console.log("Merchant Data:", merchantData);
+
+        if (!merchantData || merchantData.length === 0) {
+          throw new Error("No merchant account found for this user");
+        }
+
+        const userMerchant = merchantData.find((merchant: MerchantData) => merchant.user_id === user.id);
+        if (!userMerchant) {
+          throw new Error("No merchant account found for this user");
+        }
+
+        console.log("Found Merchant:", userMerchant);
+
+        // Step 2: Fetch merchant details including client list
+        const merchantDetailsResponse = await fetch(`${API_BASE_URL}/merchant/${userMerchant.id}`);
+        if (!merchantDetailsResponse.ok) {
+          throw new Error(`Failed to fetch merchant details: ${merchantDetailsResponse.statusText}`);
+        }
+        const merchantDetails: MerchantData = await merchantDetailsResponse.json();
+        console.log("Merchant Details with Clients:", merchantDetails);
+
+        if (!merchantDetails.clients || merchantDetails.clients.length === 0) {
+          setTotalClients(0);
+          setLoading(false);
+          return;
+        }
+
+        // Step 3: Count unique clients
+        const uniqueClients = new Set(merchantDetails.clients.map((client) => client.id));
+        const clientCount = uniqueClients.size;
+
+        setTotalClients(clientCount);
       } catch (err) {
-        console.error("Error fetching clients:", err)
-        setError("Failed to count clients")
-        setLoading(false)
+        console.error("Error fetching data:", err);
+        setError(err instanceof Error ? err.message : "An unknown error occurred");
+      } finally {
+        setLoading(false);
       }
-    }
+    };
 
     if (user) {
-      countClients()
+      countClients();
     }
-  }, [user])
+  }, [user]);
 
-  const TrendIcon = trend === "up" ? ArrowUpIcon : ArrowDownIcon
-  const trendColor = trend === "up" ? "var(--mui-palette-success-main)" : "var(--mui-palette-error-main)"
+  const TrendIcon = trend === "up" ? ArrowUpIcon : ArrowDownIcon;
+  const trendColor = trend === "up" ? "var(--mui-palette-success-main)" : "var(--mui-palette-error-main)";
 
   return (
     <Card sx={sx}>
@@ -113,20 +156,12 @@ export function TotalCustomers({ diff, trend, sx }: TotalCustomersProps): React.
           </Stack>
           {diff && !loading && !error ? (
             <Stack sx={{ alignItems: "center" }} direction="row" spacing={2}>
-              <Stack sx={{ alignItems: "center" }} direction="row" spacing={0.5}>
-                <TrendIcon color={trendColor} fontSize="var(--icon-fontSize-md)" />
-                <Typography color={trendColor} variant="body2">
-                  {diff}%
-                </Typography>
-              </Stack>
-              <Typography color="text.secondary" variant="caption">
-                Since last month
-              </Typography>
+              
+             
             </Stack>
           ) : null}
         </Stack>
       </CardContent>
     </Card>
-  )
+  );
 }
-

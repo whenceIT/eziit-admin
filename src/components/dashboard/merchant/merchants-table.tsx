@@ -61,7 +61,7 @@ export const MerchantsTable: React.FC<MerchantsTableProps> = ({
   };
 
   const handleDetailsClick = (merchantId: number) => {
-    router.push(`/dashboard/merchants/${merchantId}`);
+    router.push(`/dashboard/merchants/viewmerchants/${merchantId}`);
   };
 
   return (

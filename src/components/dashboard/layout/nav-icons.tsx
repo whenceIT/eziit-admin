@@ -1,17 +1,24 @@
-import type { Icon } from '@phosphor-icons/react/dist/lib/types';
-import { ChartPie as ChartPieIcon } from '@phosphor-icons/react/dist/ssr/ChartPie';
-import { GearSix as GearSixIcon } from '@phosphor-icons/react/dist/ssr/GearSix';
-import { PlugsConnected as PlugsConnectedIcon } from '@phosphor-icons/react/dist/ssr/PlugsConnected';
-import { User as UserIcon } from '@phosphor-icons/react/dist/ssr/User';
-import { Users as UsersIcon } from '@phosphor-icons/react/dist/ssr/Users';
-import { XSquare } from '@phosphor-icons/react/dist/ssr/XSquare';
-
+import type { Icon } from "@phosphor-icons/react";
+import {
+  ChartPie,
+  GearSix,
+  PlugsConnected,
+  User,
+  Users,
+  Storefront,
+  FileText,
+  Briefcase,
+  CurrencyDollar,
+} from "@phosphor-icons/react";
 
 export const navIcons = {
-  'chart-pie': ChartPieIcon,
-  'gear-six': GearSixIcon,
-  'plugs-connected': PlugsConnectedIcon,
-  'x-square': XSquare,
-  user: UserIcon,
-  users: UsersIcon,
+  "chart-pie": ChartPie,          // Statistics, Overview
+  "gear-six": GearSix,            // Settings, Config
+  "plugs-connected": PlugsConnected, // Integrations
+  "user": User,                    // User Profile, Account
+  "users": Users,                  // Clients, Merchants, Employers
+  "stores": Storefront,            // Store management
+  "reports": FileText,             // Reports
+  "employers": Briefcase,          // Employers
+  "finances": CurrencyDollar,      // Financial Transactions
 } as Record<string, Icon>;

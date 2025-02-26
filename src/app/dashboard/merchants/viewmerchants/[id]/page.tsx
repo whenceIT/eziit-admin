@@ -78,7 +78,7 @@ export default function MerchantDetailsPage() {
   return (
     <Box sx={{ p: 3 }}>
       <Box sx={{ mb: 3 }}>
-        <Button onClick={() => router.push('/dashboard/merchants')} variant="outlined">
+        <Button onClick={() => router.push('/dashboard/merchants/viewmerchants')} variant="outlined">
           Back to Merchants
         </Button>
       </Box>

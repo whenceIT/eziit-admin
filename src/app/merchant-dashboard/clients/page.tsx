@@ -1,45 +1,37 @@
 "use client"
-//
+
 import * as React from "react"
 import Grid from "@mui/material/Unstable_Grid2"
 import Typography from "@mui/material/Typography"
 import Paper from "@mui/material/Paper"
-import Table from "@mui/material/Table"
-import TableBody from "@mui/material/TableBody"
-import TableCell from "@mui/material/TableCell"
-import TableContainer from "@mui/material/TableContainer"
-import TableHead from "@mui/material/TableHead"
 import TablePagination from "@mui/material/TablePagination"
-import TableRow from "@mui/material/TableRow"
 import CircularProgress from "@mui/material/CircularProgress"
 import Alert from "@mui/material/Alert"
 
 import { useUser } from "@/hooks/use-user"
+import { MerchantClientsTable } from "@/components/dashboard/merchant/merchant-clients-table"
 
-interface Column {
-  id: "id" | "name" | "email" | "phone" | "status"
-  label: string
-  minWidth?: number
-  align?: "right"
+const API_BASE_URL = "https://ezitt.whencefinancesystem.com"
+
+interface MerchantDetails {
+  id: number
+  user_id: string // This matches the logged-in user's ID
+  //status: string | null
+  underwriter_status: string
+  merchant_code: string
+  clients: { id: number }[]
+  employers: { id: number }[]
 }
-
-const columns: Column[] = [
-  { id: "id", label: "Client ID", minWidth: 100 },
-  { id: "name", label: "Name", minWidth: 170 },
-  { id: "email", label: "Email", minWidth: 170 },
-  { id: "phone", label: "Phone", minWidth: 170 },
-  { id: "status", label: "Status", minWidth: 100 },
-]
 
 export interface MerchantClient {
   id: number
   name: string
   email: string
   phone: string
-  status: string
-  float?: number 
-  employer?: string 
-  ratings?: number 
+  //status: string
+  float: number
+  employer: number
+  ratings: number
 }
 
 export default function MerchantClients(): React.JSX.Element {
@@ -51,42 +43,141 @@ export default function MerchantClients(): React.JSX.Element {
   const { user } = useUser()
 
   React.useEffect(() => {
-    if (user && user.merchantId) {
-      fetch(`https://ezitt.whencefinancesystem.com/merchants/${user.merchantId}/clients`)
-        .then((response) => {
-          if (!response.ok) {
-            throw new Error("Failed to fetch clients")
-          }
-          return response.json()
+    const fetchClients = async () => {
+      if (!user?.id) {
+        setError("User not authenticated")
+        setLoading(false)
+        return
+      }
+
+      // Debug user information
+      console.log("Current User:", {
+        id: user.id,
+        email: user.email,
+        // Add any other relevant user fields
+      })
+
+      try {
+        // First, let's see all available merchants to debug
+        const allMerchantsResponse = await fetch(`${API_BASE_URL}/merchants`)
+        const allMerchants = await allMerchantsResponse.json()
+        console.log("All Available Merchants:", allMerchants)
+
+        // Step 1: Find the merchant where user_id matches the logged-in user's ID
+        const merchantResponse = await fetch(`${API_BASE_URL}/merchants?user_id=${user.id}`)
+        if (!merchantResponse.ok) {
+          throw new Error(`Failed to fetch merchant details: ${merchantResponse.statusText}`)
+        }
+        const merchantData = await merchantResponse.json()
+        console.log("Merchant Query Response:", {
+          queryUserId: user.id,
+          merchantData: merchantData,
         })
-        .then((data) => {
-          setClients(data)
+
+        if (!merchantData || merchantData.length === 0) {
+          throw new Error("No merchant account found for this user")
+        }
+
+        // Debug merchant matching
+        const userMerchant = merchantData.find((merchant: MerchantDetails) => {
+          console.log("Comparing merchant:", {
+            merchantUserId: merchant.user_id,
+            loggedInUserId: user.id,
+            isMatch: merchant.user_id === user.id,
+          })
+          return merchant.user_id === user.id
+        })
+
+        if (!userMerchant) {
+          throw new Error("No merchant account found for this user")
+        }
+
+        console.log("Found Merchant:", userMerchant)
+
+        // Step 2: Get merchant details including client list
+        const merchantDetailsResponse = await fetch(`${API_BASE_URL}/merchant/${userMerchant.id}`)
+        if (!merchantDetailsResponse.ok) {
+          throw new Error(`Failed to fetch merchant details: ${merchantDetailsResponse.statusText}`)
+        }
+        const merchantDetails: MerchantDetails = await merchantDetailsResponse.json()
+        console.log("Merchant Details with Clients:", merchantDetails)
+
+        if (!merchantDetails.clients || merchantDetails.clients.length === 0) {
+          setClients([])
           setLoading(false)
-        })
-        .catch((err) => {
-          console.error("Error fetching clients:", err)
-          setError("Failed to load clients. Please try again later.")
-          setLoading(false)
-        })
+          return
+        }
+
+        // Step 3: Fetch details for each client
+        const clientsWithDetails = await Promise.all(
+          merchantDetails.clients.map(async (client) => {
+            try {
+              // Fetch client details
+              const clientResponse = await fetch(`${API_BASE_URL}/client/${client.id}`)
+              if (!clientResponse.ok) {
+                throw new Error(`Failed to fetch client details`)
+              }
+              const clientData = await clientResponse.json()
+              console.log(`Client ${client.id} Data:`, clientData)
+
+              // Fetch user details
+              const userResponse = await fetch(`${API_BASE_URL}/user/${clientData.user_id}`)
+              if (!userResponse.ok) {
+                throw new Error(`Failed to fetch user details`)
+              }
+              const userData = await userResponse.json()
+              console.log(`User Data for Client ${client.id}:`, userData)
+
+              return {
+                id: clientData.id,
+                name: `${userData.first_name} ${userData.last_name}`,
+                email: userData.email || "N/A",
+                phone: userData.phone || "N/A",
+                //status: clientData.merchant_status || "pending",
+                float: Number.parseFloat(clientData.float) || 0,
+                employer: clientData.employer_id || 0,
+                ratings: clientData.ratings || 0,
+              }
+            } catch (error) {
+              console.error(`Error fetching details for client ${client.id}:`, error)
+              return {
+                id: client.id,
+                name: "Error loading client",
+                email: "N/A",
+                phone: "N/A",
+  
+                float: 0,
+                employer: 0,
+                ratings: 0,
+              }
+            }
+          }),
+        )
+
+        setClients(clientsWithDetails)
+        setLoading(false)
+      } catch (err) {
+        console.error("Error fetching data:", err)
+        setError(err instanceof Error ? err.message : "An unknown error occurred")
+        setLoading(false)
+      }
     }
+
+    fetchClients()
   }, [user])
 
-  const handleChangePage = (event: unknown, newPage: number) => {
-    setPage(newPage)
-  }
-
+  const handleChangePage = (event: unknown, newPage: number) => setPage(newPage)
   const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
     setRowsPerPage(+event.target.value)
     setPage(0)
   }
 
-  if (loading) {
-    return <CircularProgress />
-  }
+  if (loading) return <CircularProgress />
+  if (error) return <Alert severity="error">{error}</Alert>
 
-  if (error) {
-    return <Alert severity="error">{error}</Alert>
-  }
+  const startIndex = page * rowsPerPage
+  const endIndex = startIndex + rowsPerPage
+  const paginatedClients = clients.slice(startIndex, endIndex)
 
   return (
     <Grid container spacing={3}>
@@ -94,46 +185,22 @@ export default function MerchantClients(): React.JSX.Element {
         <Typography variant="h4" gutterBottom>
           Clients
         </Typography>
-        <Paper sx={{ width: "100%", overflow: "hidden" }}>
-          <TableContainer sx={{ maxHeight: 440 }}>
-            <Table stickyHeader aria-label="sticky table">
-              <TableHead>
-                <TableRow>
-                  {columns.map((column) => (
-                    <TableCell key={column.id} align={column.align} style={{ minWidth: column.minWidth }}>
-                      {column.label}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {clients.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((client) => {
-                  return (
-                    <TableRow hover role="checkbox" tabIndex={-1} key={client.id}>
-                      {columns.map((column) => {
-                        const value = client[column.id]
-                        return (
-                          <TableCell key={column.id} align={column.align}>
-                            {value}
-                          </TableCell>
-                        )
-                      })}
-                    </TableRow>
-                  )
-                })}
-              </TableBody>
-            </Table>
-          </TableContainer>
-          <TablePagination
-            rowsPerPageOptions={[10, 25, 100]}
-            component="div"
-            count={clients.length}
-            rowsPerPage={rowsPerPage}
-            page={page}
-            onPageChange={handleChangePage}
-            onRowsPerPageChange={handleChangeRowsPerPage}
-          />
-        </Paper>
+        {clients.length === 0 ? (
+          <Alert severity="info">No clients found for this merchant.</Alert>
+        ) : (
+          <Paper sx={{ width: "100%", overflow: "hidden" }}>
+            <MerchantClientsTable clients={paginatedClients} />
+            <TablePagination
+              rowsPerPageOptions={[10, 25, 100]}
+              component="div"
+              count={clients.length}
+              rowsPerPage={rowsPerPage}
+              page={page}
+              onPageChange={handleChangePage}
+              onRowsPerPageChange={handleChangeRowsPerPage}
+            />
+          </Paper>
+        )}
       </Grid>
     </Grid>
   )
