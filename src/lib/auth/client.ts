@@ -38,7 +38,7 @@ class AuthClient {
     this.token = token
     if (typeof window !== "undefined") {
       localStorage.setItem(TOKEN_KEY, token)
-      Cookies.set(TOKEN_KEY, token, { expires: 7 }) // Set cookie to expire in 7 days
+      Cookies.set(TOKEN_KEY, token, { expires: 7 }) //sets cookie to expire in 7 days
     }
   }
 

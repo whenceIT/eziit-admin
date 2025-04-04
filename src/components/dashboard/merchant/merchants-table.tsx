@@ -35,6 +35,7 @@ interface MerchantsTableProps {
   onRowsPerPageChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
   page: number;
   rowsPerPage: number;
+  onViewDetails: (clientId: number) => void
 }
 
 export const MerchantsTable: React.FC<MerchantsTableProps> = ({

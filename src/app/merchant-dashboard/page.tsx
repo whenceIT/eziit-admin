@@ -13,7 +13,7 @@ import { Sales } from "@/components/dashboard/merchantOverview/totalTransactions
 import { LatestOrders } from "@/components/dashboard/merchantOverview/latestTransactions";
 import { useUser } from "@/hooks/use-user";
 import { Transaction, User } from "@/types/user";
-
+//
 interface Store {
   id: number;
   location: string;

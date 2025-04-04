@@ -10,8 +10,10 @@ import Head from 'next/head';
 import { config } from '@/config';
 import { MerchantsFilters } from '@/components/dashboard/merchant/merchants-filters';
 import { MerchantsTable, Merchant } from '@/components/dashboard/merchant/merchants-table';
+import { useRouter } from 'next/navigation';
 
 export default function Page(): React.JSX.Element {
+  const router = useRouter();
   const [merchants, setMerchants] = useState<Merchant[]>([]);
   const [filteredMerchants, setFilteredMerchants] = useState<Merchant[]>([]);
   const [activeFilter, setActiveFilter] = useState<string | null>(null);
@@ -45,7 +47,10 @@ export default function Page(): React.JSX.Element {
       console.error('Error fetching merchants:', error);
     }
   }, []);
-  
+
+  const handleViewDetails = useCallback((merchantId: number) => {
+    router.push(`/dashboard/merchants/${merchantId}`);
+  }, [router]);
 
   useEffect(() => {
     fetchMerchants();
@@ -82,7 +87,8 @@ export default function Page(): React.JSX.Element {
       <Stack spacing={3}>
         <Stack direction="row" spacing={3}>
           <Stack spacing={1} sx={{ flex: '1 1 auto' }}>
-            <Typography variant="h4">Merchants</Typography><Typography variant="body1" color="textSecondary">
+            <Typography variant="h4">Merchants</Typography>
+            <Typography variant="body1" color="textSecondary">
               All eziit Merchants. Approved, Pending and Declined by Admin.
             </Typography>
 
@@ -133,6 +139,7 @@ export default function Page(): React.JSX.Element {
           onRowsPerPageChange={handleRowsPerPageChange}
           page={page}
           rowsPerPage={rowsPerPage}
+          onViewDetails={handleViewDetails}
         />
       </Stack>
     </>
@@ -142,4 +149,3 @@ export default function Page(): React.JSX.Element {
 function applyPagination(rows: Merchant[], page: number, rowsPerPage: number): Merchant[] {
   return rows.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 }
-

@@ -36,7 +36,7 @@ export default function Page(): React.JSX.Element {
           employees: employer.employees ?? null,
           merchants: employer.merchants ?? null,
           transactions: employer.transactions ?? null,
-          status: employer.status ?? null,
+          //status: employer.status ?? null,
         }));
 
         setEmployers(transformedData);
@@ -50,16 +50,7 @@ export default function Page(): React.JSX.Element {
     fetchEmployers();
   }, [fetchEmployers]);
 
-  const handleFilter = useCallback((status: string | null) => {
-    setActiveFilter(status);
-    if (status === null) {
-      setFilteredEmployers(employers);
-    } else {
-      const filtered = employers.filter((employer) => employer.status.toLowerCase() === status.toLowerCase());
-      setFilteredEmployers(filtered);
-    }
-    setPage(0);
-  }, [employers]);
+  
 
   const handlePageChange = useCallback((event: unknown, newPage: number) => {
     setPage(newPage);
@@ -86,21 +77,21 @@ export default function Page(): React.JSX.Element {
             <Button 
                 color={activeFilter === 'approved' ? 'primary' : 'inherit'}
                 variant={activeFilter === 'approved' ? 'contained' : 'outlined'}
-                onClick={() => handleFilter('approved')}
+                
               >
                 Approved
               </Button>
               <Button 
                 color={activeFilter === 'pending' ? 'primary' : 'inherit'}
                 variant={activeFilter === 'pending' ? 'contained' : 'outlined'}
-                onClick={() => handleFilter('pending')}
+                
               >
                 Pending
               </Button>
               <Button 
                 color={activeFilter === 'declined' ? 'primary' : 'inherit'}
                 variant={activeFilter === 'declined' ? 'contained' : 'outlined'}
-                onClick={() => handleFilter('declined')}
+                
               >
                 Declined
               </Button>
@@ -108,7 +99,7 @@ export default function Page(): React.JSX.Element {
                 <Button 
                   color="inherit"
                   variant="outlined"
-                  onClick={() => handleFilter(null)}
+                  
                 >
                   Clear Filter
                 </Button>

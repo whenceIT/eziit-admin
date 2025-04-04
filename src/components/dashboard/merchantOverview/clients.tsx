@@ -96,7 +96,7 @@ export function TotalCustomers({ diff, trend, sx }: TotalCustomersProps): React.
 
         console.log("Found Merchant:", userMerchant);
 
-        // Step 2: Fetch merchant details including client list
+        //Fetch merchant details including client list
         const merchantDetailsResponse = await fetch(`${API_BASE_URL}/merchant/${userMerchant.id}`);
         if (!merchantDetailsResponse.ok) {
           throw new Error(`Failed to fetch merchant details: ${merchantDetailsResponse.statusText}`);

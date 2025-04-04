@@ -14,14 +14,14 @@ import {
   Button,
 } from '@mui/material';
 import { useRouter } from 'next/navigation';
-
+//
 export interface Employer {
   id: number;
-  user_id: number;
-  transactions: string;
-  merchants: string;
-  employees: string;
-  status: string;
+  name: string;
+  email: string;
+  phone: string;
+  float: number;
+  ratings: number;
 }
 
 interface EmployersTableProps {
@@ -32,7 +32,7 @@ interface EmployersTableProps {
   page: number;
   rowsPerPage: number;
 }
-
+//
 export const EmployersTable: React.FC<EmployersTableProps> = ({
   count,
   items,
@@ -42,20 +42,6 @@ export const EmployersTable: React.FC<EmployersTableProps> = ({
   rowsPerPage,
 }) => {
   const router = useRouter();
-
-  const getStatusColor = (status: string) => {
-    if (!status) return "default"
-    switch (status.toLowerCase()) {
-      case 'active':
-        return 'success';
-      case 'pending':
-        return 'warning';
-      case 'declined':
-        return 'error';
-      default:
-        return 'default';
-    }
-  };
 
   const handleDetailsClick = (employerId: number) => {
     router.push(`/dashboard/employers/${employerId}`);
@@ -67,44 +53,44 @@ export const EmployersTable: React.FC<EmployersTableProps> = ({
         <Table sx={{ minWidth: 800 }} aria-label="employers table">
           <TableHead>
             <TableRow>
-              <TableCell>Id</TableCell>
-              <TableCell>User Id</TableCell>
-              <TableCell>Employees</TableCell>
-              
-              <TableCell>Merchants</TableCell>
-              <TableCell>Transactions</TableCell>
-              <TableCell>Status</TableCell>
+              <TableCell>ID</TableCell>
+              <TableCell>Name</TableCell>
+              <TableCell>Email</TableCell>
+              <TableCell>Phone</TableCell>
+              <TableCell>Float</TableCell>
+              <TableCell>Ratings</TableCell>
               <TableCell>Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {items.map((employer) => (
-              <TableRow hover key={employer.id}>
-                <TableCell>{employer.id}</TableCell>
-                <TableCell>{employer.user_id}</TableCell>
-
-                <TableCell>{employer.employees}</TableCell>
-                <TableCell>{employer.merchants}</TableCell>
-                <TableCell>{employer.transactions}</TableCell>
-                <TableCell>
-                  <Chip
-                    label={employer.status}
-                    color={getStatusColor(employer.status)}
-                    size="small"
-                  />
-                </TableCell>
-                <TableCell>
-                  <Button
-                    variant="contained"
-                    color="primary"
-                    size="small"
-                    onClick={() => handleDetailsClick(employer.id)}
-                  >
-                    Details
-                  </Button>
+            {Array.isArray(items) ? (
+              items.map((employer) => (
+                <TableRow hover key={employer.id}>
+                  <TableCell>{employer.id}</TableCell>
+                  <TableCell>{employer.name}</TableCell>
+                  <TableCell>{employer.email}</TableCell>
+                  <TableCell>{employer.phone}</TableCell>
+                  <TableCell>{employer.float}</TableCell>
+                  <TableCell>{employer.ratings}</TableCell>
+                  <TableCell>
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      size="small"
+                      onClick={() => handleDetailsClick(employer.id)}
+                    >
+                      View Details 
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={7} align="center">
+                  No Employers Found
                 </TableCell>
               </TableRow>
-            ))}
+            )}
           </TableBody>
         </Table>
       </TableContainer>
@@ -120,4 +106,3 @@ export const EmployersTable: React.FC<EmployersTableProps> = ({
     </Card>
   );
 };
-

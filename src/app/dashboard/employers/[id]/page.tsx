@@ -7,13 +7,24 @@ import {
   Button,
   Card,
   CardContent,
-  Chip,
   Grid,
   Typography,
   CircularProgress,
   Alert,
 } from '@mui/material';
-import { Employer } from '@/components/dashboard/employer/employers-table';
+
+export interface Employer {
+  id: number;
+  name: string;
+  email: string;
+  phone: string;
+  float: number;
+  ratings: number;
+  employees?: number;
+  merchants?: number;
+  transactions?: number;
+  user_id?: number;
+}
 
 export default function EmployerDetailsPage() {
   const params = useParams();
@@ -21,7 +32,6 @@ export default function EmployerDetailsPage() {
   const [employer, setEmployer] = useState<Employer | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [statusUpdateMessage, setStatusUpdateMessage] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchEmployerDetails = async () => {
@@ -47,34 +57,6 @@ export default function EmployerDetailsPage() {
     }
   }, [params.id]);
 
-  const handleStatusChange = async (newStatus: 'approved' | 'declined') => {
-    try {
-      setStatusUpdateMessage(null);
-      const response = await fetch(`https://ezitt.whencefinancesystem.com/edit-employer-status/${params.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ status: newStatus }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to update status');
-      }
-
-      const result = await response.json();
-      setStatusUpdateMessage(result.message || 'Status updated successfully');
-      
-      // Update the local employer state with new status
-      if (employer) {
-        setEmployer({ ...employer, status: newStatus });
-      }
-    } catch (error) {
-      console.error('Error updating employer status:', error);
-      setError('Failed to update employer status. Please try again.');
-    }
-  };
-
   return (
     <Box sx={{ p: 3 }}>
       <Box sx={{ mb: 3 }}>
@@ -92,32 +74,8 @@ export default function EmployerDetailsPage() {
             <Alert severity="error">{error}</Alert>
           ) : employer ? (
             <>
-              {statusUpdateMessage && (
-                <Alert severity="success" sx={{ mb: 2 }}>
-                  {statusUpdateMessage}
-                </Alert>
-              )}
-              <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Box sx={{ mb: 3 }}>
                 <Typography variant="h4">Employer Details</Typography>
-                <Box>
-                  <Button
-                    variant="contained"
-                    color="success"
-                    sx={{ mr: 1 }}
-                    onClick={() => handleStatusChange('approved')}
-                    disabled={employer.status === 'approved'}
-                  >
-                    Approve
-                  </Button>
-                  <Button
-                    variant="contained"
-                    color="error"
-                    onClick={() => handleStatusChange('declined')}
-                    disabled={employer.status === 'declined'}
-                  >
-                    Decline
-                  </Button>
-                </Box>
               </Box>
               <Grid container spacing={2}>
                 <Grid item xs={12} sm={6}>
@@ -125,39 +83,40 @@ export default function EmployerDetailsPage() {
                   <Typography variant="body1">{employer.id}</Typography>
                 </Grid>
                 <Grid item xs={12} sm={6}>
-                  <Typography variant="subtitle1">Status</Typography>
-                  <Chip
-                    label={employer.status}
-                    color={
-                      employer.status === 'approved'
-                        ? 'success'
-                        : employer.status === 'pending'
-                        ? 'warning'
-                        : 'error'
-                    }
-                  />
+                  <Typography variant="subtitle1">Name</Typography>
+                  <Typography variant="body1">{employer.name}</Typography>
                 </Grid>
                 <Grid item xs={12} sm={6}>
-                  <Typography variant="subtitle1">ID</Typography>
-                  <Typography variant="body1">{employer.id}</Typography>
+                  <Typography variant="subtitle1">Email</Typography>
+                  <Typography variant="body1">{employer.email}</Typography>
                 </Grid>
                 <Grid item xs={12} sm={6}>
-                  <Typography variant="subtitle1">Users Id</Typography>
-                  <Typography variant="body1">{employer.id}</Typography>
+                  <Typography variant="subtitle1">Phone</Typography>
+                  <Typography variant="body1">{employer.phone}</Typography>
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <Typography variant="subtitle1">User ID</Typography>
+                  <Typography variant="body1">{employer.user_id || 'N/A'}</Typography>
                 </Grid>
                 <Grid item xs={12} sm={6}>
                   <Typography variant="subtitle1">Employees</Typography>
-                  <Typography variant="body1">{employer.employees}</Typography>
+                  <Typography variant="body1">{employer.employees || 'N/A'}</Typography>
                 </Grid>
-                
-            
                 <Grid item xs={12} sm={6}>
                   <Typography variant="subtitle1">Merchants</Typography>
-                  <Typography variant="body1">{employer.merchants}</Typography>
+                  <Typography variant="body1">{employer.merchants || 'N/A'}</Typography>
                 </Grid>
                 <Grid item xs={12} sm={6}>
                   <Typography variant="subtitle1">Transactions</Typography>
-                  <Typography variant="body1">{employer.transactions}</Typography>
+                  <Typography variant="body1">{employer.transactions || 'N/A'}</Typography>
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <Typography variant="subtitle1">Float</Typography>
+                  <Typography variant="body1">{employer.float}</Typography>
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <Typography variant="subtitle1">Ratings</Typography>
+                  <Typography variant="body1">{employer.ratings}</Typography>
                 </Grid>
               </Grid>
             </>
@@ -169,4 +128,3 @@ export default function EmployerDetailsPage() {
     </Box>
   );
 }
-

@@ -1,3 +1,4 @@
+//update for dashboard navigation
 "use client"
 
 import type React from "react"
@@ -35,7 +36,12 @@ export function SignInForm() {
       const user = await signIn(email, password)
       if (user.user_type === "merchant") {
         router.push(paths.dashboard.merchantOverview)
-      } else {
+      } else if (user.user_type === "employer") {
+        router.push(paths.dashboard.employerOverview);
+      } else if (user.user_type === "underwriter") {
+        router.push(paths.dashboard.underwriterOverview); 
+      }
+      else {
         router.push(paths.dashboard.overview)
       }
     } catch (err) {

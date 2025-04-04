@@ -21,3 +21,14 @@ export interface Transaction {
   paid_by_user: User | null;
   paid_to_user: User | null;
 }
+
+
+export interface Employer {
+  id: number;
+  name: string;
+  email: string;
+  phone: string;
+  address?: string;
+  created_at?: string;
+  updated_at?: string;
+}

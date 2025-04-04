@@ -14,17 +14,26 @@ import { isNavItemActive } from "@/lib/is-nav-item-active";
 import { Logo } from "@/components/core/logo";
 import { useUser } from "@/hooks/use-user";
 
-import { adminNavItems, merchantNavItems } from "./config";
+import { adminNavItems, merchantNavItems, employerNavItems, underwriterNavItems } from "./config"; //add employerNavItems
 import { navIcons } from "./nav-icons";
 
 interface SideNavProps {
-  userType: string; 
+  userType: string;
 }
 
 export function SideNav({ userType }: SideNavProps): React.JSX.Element {
   const pathname = usePathname();
   const { user } = useUser();
-  const navItems = userType === "merchant" ? merchantNavItems : adminNavItems;
+
+  // Determine navItems based on user type
+  const navItems =
+    userType === "merchant"
+      ? merchantNavItems
+      : userType === "employer"
+      ? employerNavItems
+      : userType === "underwriter"
+      ? underwriterNavItems
+      : adminNavItems;
 
   return (
     <Box

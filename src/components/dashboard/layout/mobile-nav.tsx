@@ -17,11 +17,8 @@ import { isNavItemActive } from "@/lib/is-nav-item-active"
 import { Logo } from "@/components/core/logo"
 import { useUser } from "@/hooks/use-user"
 
-import { adminNavItems, merchantNavItems } from "./config"
+import { adminNavItems, merchantNavItems, employerNavItems, underwriterNavItems } from "./config"
 import { navIcons } from "./nav-icons"
-
-
-
 
 export interface MobileNavProps {
   onClose?: () => void
@@ -31,7 +28,16 @@ export interface MobileNavProps {
 export function MobileNav({ open, onClose }: MobileNavProps): React.JSX.Element {
   const pathname = usePathname()
   const { user } = useUser()
-  const navItems = user?.user_type === "merchant" ? merchantNavItems : adminNavItems
+
+  // Determine navItems based on user type
+  const navItems =
+    user?.user_type === "merchant"
+      ? merchantNavItems
+      : user?.user_type === "employer"
+      ? employerNavItems
+      : user?.user_type === "underwriter"
+      ? underwriterNavItems
+      : adminNavItems
 
   return (
     <Drawer
@@ -79,10 +85,7 @@ function renderNavItems({
   onClose,
 }: { items?: NavItemConfig[]; pathname: string; onClose?: () => void }): React.JSX.Element {
   const children = items.reduce((acc: React.ReactNode[], curr: NavItemConfig): React.ReactNode[] => {
-    
-
     acc.push(<NavItem pathname={pathname} onClose={onClose} {...curr} />)
-
     return acc
   }, [])
 
@@ -185,5 +188,3 @@ function NavItem({
     </li>
   )
 }
-
-/* line 186 */
