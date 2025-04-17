@@ -32,7 +32,7 @@ import PersonIcon from '@mui/icons-material/Person'
 import SearchIcon from '@mui/icons-material/Search'
 import { useRouter } from 'next/navigation'
 
-const API_BASE_URL = "http://localhost:5000"//"https://ezitt.whencefinancesystem.com"
+const API_BASE_URL = "https://ezitt.whencefinancesystem.com"
 
 interface UserRating {
   id: string
