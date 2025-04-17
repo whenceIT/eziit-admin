@@ -14,9 +14,20 @@ import {
   Box,
   Stack,
   Snackbar,
+  Grid,
+  Paper,
+  Avatar,
+  Chip,
 } from "@mui/material"
-import Grid from "@mui/material/Unstable_Grid2"
 import { useUser } from "@/hooks/use-user"
+import {
+  People as PeopleIcon,
+  Store as StoreIcon,
+  Business as BusinessIcon,
+  Gavel as GavelIcon,
+  ArrowBack as ArrowBackIcon,
+  Star as StarIcon,
+} from "@mui/icons-material"
 
 const API_BASE_URL = "https://ezitt.whencefinancesystem.com"
 
@@ -35,6 +46,13 @@ interface Request {
 
 type AlertSeverity = "success" | "error" | "info" | "warning"
 
+interface Rating {
+  rating: number
+  comment: string
+  created_at: string
+  rater_name: string
+}
+
 interface MerchantDetails {
   id: number
   user_id: string | null
@@ -42,17 +60,25 @@ interface MerchantDetails {
   email: string
   phone: string
   float: number
-  merchants: string | null
+  merchant_code: string
+  average_rating?: number | null
   transactions: string | null
-  employer: string | null
-  employer_name?: string
-  ratings: number | null
-  comments: string | null
+  stores: string | null
+  ratings: Rating[] | null
   status: string
+  underwriter_status: string
+  underwriter_id: string | null
   created_at?: string
   updated_at?: string
   is_linked?: boolean
-  underwriter_id?: string 
+  user_rating?: number | null
+}
+
+interface ConnectionCounts {
+  merchants: number
+  underwriters: number
+  employers: number
+  clients: number
 }
 
 export default function MerchantDetails(): React.JSX.Element {
@@ -63,10 +89,17 @@ export default function MerchantDetails(): React.JSX.Element {
 
   const [merchant, setMerchant] = React.useState<MerchantDetails | null>(null)
   const [loading, setLoading] = React.useState(true)
+  const [loadingRatings, setLoadingRatings] = React.useState(true)
   const [error, setError] = React.useState<string | null>(null)
   const [snackbarOpen, setSnackbarOpen] = React.useState(false)
   const [snackbarMessage, setSnackbarMessage] = React.useState("")
   const [snackbarSeverity, setSnackbarSeverity] = React.useState<AlertSeverity>("success")
+  const [connectionCounts, setConnectionCounts] = React.useState<ConnectionCounts>({
+    merchants: 0,
+    underwriters: 0,
+    employers: 0,
+    clients: 0
+  })
 
   React.useEffect(() => {
     const fetchMerchantDetails = async () => {
@@ -77,31 +110,90 @@ export default function MerchantDetails(): React.JSX.Element {
       }
 
       try {
+        // Fetch merchant details
         const merchantResponse = await fetch(`${API_BASE_URL}/merchant/${merchantId}`)
-        if (!merchantResponse.ok) throw new Error(`Failed to fetch merchant details: ${merchantResponse.statusText}`)
-        const merchantData = await merchantResponse.json()
-
-        let isLinked = false
-        try {
-          const requestsResponse = await fetch(`${API_BASE_URL}/requests`)
-          if (requestsResponse.ok) {
-            const allRequests: Request[] = await requestsResponse.json()
-            const relevantRequests = allRequests.filter((req) => {
-              if (req.request_type !== "underwriter-merchant") return false
-              const involvesUnderwriter = (req.requester_type === "underwriter" && req.requester_id === user.id) ||
-                (req.recipient_type === "underwriter" && req.recipient_id === user.id)
-              const involvesMerchant = (req.requester_type === "merchant" && req.requester_id === merchantData.user_id) ||
-                (req.recipient_type === "merchant" && req.recipient_id === merchantData.user_id)
-              return involvesUnderwriter && involvesMerchant
-            })
-
-            const approvedRequest = relevantRequests.find(req => req.status === "approved")
-            if (approvedRequest) isLinked = true
-          }
-        } catch (err) {
-          console.error("Error checking relationship status:", err)
+        if (!merchantResponse.ok) {
+          throw new Error(`Failed to fetch merchant details: ${merchantResponse.statusText}`)
         }
 
+        const merchantData = await merchantResponse.json()
+        console.log("Merchant Data:", merchantData)
+
+        let ratings: Rating[] = []
+        let averageRating = null
+        if (merchantData.user_id) {
+          try {
+            const ratingResponse = await fetch(`${API_BASE_URL}/user/${merchantData.user_id}/ratings`)
+            if (ratingResponse.ok) {
+              const ratingData = await ratingResponse.json()
+              if (ratingData.ratings?.length > 0) {
+                ratings = ratingData.ratings
+                const sum = ratings.reduce((acc, curr) => acc + curr.rating, 0)
+                averageRating = sum / ratings.length
+              }
+            }
+          } catch (err) {
+            console.error("Error fetching ratings:", err)
+          }
+        }
+        setLoadingRatings(false)
+
+        if (!merchantData) {
+          throw new Error("Received empty merchant data")
+        }
+
+        const requestsResponse = await fetch(`${API_BASE_URL}/requests`)
+        if (!requestsResponse.ok) throw new Error('Failed to fetch connections')
+        const allRequests: Request[] = await requestsResponse.json()
+        
+        
+        const merchantRequests = allRequests.filter(request => 
+          request.status === 'approved' && 
+          ((request.requester_id === merchantData.user_id) || 
+          (request.recipient_id === merchantData.user_id)))
+        
+        const counts = {
+          merchants: merchantRequests.filter(req => 
+            (req.requester_type === 'merchant' && req.requester_id !== merchantData.user_id) || 
+            (req.recipient_type === 'merchant' && req.recipient_id !== merchantData.user_id)
+          ).length,
+          
+          underwriters: merchantRequests.filter(req => 
+            (req.requester_type === 'underwriter' && req.requester_id !== merchantData.user_id) || 
+            (req.recipient_type === 'underwriter' && req.recipient_id !== merchantData.user_id)
+          ).length,
+          
+          employers: merchantRequests.filter(req => 
+            (req.requester_type === 'employer' && req.requester_id !== merchantData.user_id) || 
+            (req.recipient_type === 'employer' && req.recipient_id !== merchantData.user_id)
+          ).length,
+          
+          clients: merchantRequests.filter(req => 
+            (req.requester_type === 'client' && req.requester_id !== merchantData.user_id) || 
+            (req.recipient_type === 'client' && req.recipient_id !== merchantData.user_id)
+          ).length
+        }
+
+        setConnectionCounts(counts)
+
+        // Check if already linked
+        let isLinked = false
+        if (user.user_type === 'underwriter') {
+          const relevantRequests = allRequests.filter((req) => {
+            if (req.request_type !== "underwriter-merchant") return false
+            const involvesUnderwriter = 
+              (req.requester_type === "underwriter" && req.requester_id === user.id) ||
+              (req.recipient_type === "underwriter" && req.recipient_id === user.id)
+            const involvesMerchant = 
+              (req.requester_type === "merchant" && req.requester_id === merchantData.user_id) ||
+              (req.recipient_type === "merchant" && req.recipient_id === merchantData.user_id)
+            return involvesUnderwriter && involvesMerchant
+          })
+
+          isLinked = relevantRequests.some(req => req.status === "approved")
+        }
+
+        // Fetch user details if available
         let userData = { first_name: "", last_name: "", email: "", phone: "" }
         if (merchantData.user_id) {
           const userResponse = await fetch(`${API_BASE_URL}/user/${merchantData.user_id}`)
@@ -110,32 +202,24 @@ export default function MerchantDetails(): React.JSX.Element {
           }
         }
 
-        let underwriterName = "N/A"
-        if (merchantData.underwriter_id) {
-          const underwriterResponse = await fetch(`${API_BASE_URL}/underwriter/${merchantData.underwriter_id}`)
-          if (underwriterResponse.ok) {
-            const underwriterData = await underwriterResponse.json()
-            underwriterName = underwriterData.name || `Underwriter ID: ${merchantData.underwriter_id}`
-          }
-        }
-
         setMerchant({
           id: merchantData.id,
           user_id: merchantData.user_id,
-          name: `${userData.first_name || ""} ${userData.last_name || ""}`.trim() || "N/A",
-          email: userData.email || "N/A",
-          phone: userData.phone || "N/A",
+          name: `${userData.first_name || ""} ${userData.last_name || ""}`.trim() || merchantData.name || "N/A",
+          email: userData.email || merchantData.email || "N/A",
+          phone: userData.phone || merchantData.phone || "N/A",
           float: merchantData.float || 0,
-          merchants: merchantData.merchants || "N/A",
-          employer: merchantData.employers,
+          merchant_code: merchantData.merchant_code || "N/A",
           transactions: merchantData.transactions || "N/A",
-          ratings: merchantData.ratings || 0,
-          comments: merchantData.comments || "",
+          stores: merchantData.stores || "N/A",
+          ratings: ratings,
           status: merchantData.status || "active",
+          underwriter_status: merchantData.underwriter_status || "neutral",
+          underwriter_id: merchantData.underwriter_id || null,
           created_at: merchantData.created_at,
           updated_at: merchantData.updated_at,
           is_linked: isLinked,
-          underwriter_id: merchantData.underwriter_id,
+          average_rating: averageRating
         })
 
         setLoading(false)
@@ -155,17 +239,21 @@ export default function MerchantDetails(): React.JSX.Element {
         throw new Error("Missing user or merchant ID")
       }
 
+      // Check for existing pending requests
       const requestsResponse = await fetch(`${API_BASE_URL}/requests`)
       if (requestsResponse.ok) {
         const allRequests: Request[] = await requestsResponse.json()
         const pendingRequests = allRequests.filter((req) => {
           if (req.request_type !== "underwriter-merchant" || req.status !== "pending") return false
-          const involvesUnderwriter = (req.requester_type === "underwriter" && req.requester_id === user.id) ||
+          const involvesUnderwriter = 
+            (req.requester_type === "underwriter" && req.requester_id === user.id) ||
             (req.recipient_type === "underwriter" && req.recipient_id === user.id)
-          const involvesMerchant = (req.requester_type === "merchant" && req.requester_id === merchant.user_id) ||
+          const involvesMerchant = 
+            (req.requester_type === "merchant" && req.requester_id === merchant.user_id) ||
             (req.recipient_type === "merchant" && req.recipient_id === merchant.user_id)
           return involvesUnderwriter && involvesMerchant
         })
+        
         if (pendingRequests.length > 0) {
           setSnackbarMessage("A pending link request already exists for this merchant")
           setSnackbarSeverity("info")
@@ -174,6 +262,7 @@ export default function MerchantDetails(): React.JSX.Element {
         }
       }
 
+      // Create new request
       const response = await fetch(`${API_BASE_URL}/requests`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -187,10 +276,17 @@ export default function MerchantDetails(): React.JSX.Element {
         }),
       })
 
-      if (!response.ok) throw new Error(await response.text() || "Failed to send link request")
+      if (!response.ok) {
+        const errorText = await response.text()
+        throw new Error(errorText || "Failed to send link request")
+      }
+
       setSnackbarMessage("Link request sent successfully!")
       setSnackbarSeverity("success")
       setSnackbarOpen(true)
+      
+      // Refresh merchant data to show updated link status
+      setMerchant(prev => prev ? { ...prev, is_linked: true } : null)
     } catch (error) {
       console.error("Error requesting link:", error)
       setSnackbarMessage(error instanceof Error ? error.message : "Failed to send link request")
@@ -205,69 +301,296 @@ export default function MerchantDetails(): React.JSX.Element {
 
   const handleCloseSnackbar = () => setSnackbarOpen(false)
 
-  if (loading) return <CircularProgress />
+  if (loading) return (
+    <Box display="flex" justifyContent="center" alignItems="center" minHeight="80vh">
+      <CircularProgress />
+    </Box>
+  )
+
   if (error) return <Alert severity="error">{error}</Alert>
   if (!merchant) return <Alert severity="error">Merchant not found</Alert>
 
   return (
-    <Grid container spacing={3}>
-      <Grid xs={12} component="div">
-        <Box sx={{ mb: 3, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <Button onClick={handleGoBack} variant="outlined">Back</Button>
-          <Typography variant="h4">Merchant Details</Typography>
-          <Box />
-        </Box>
+    <Box sx={{ p: 1 }}>
+      <Button 
+        startIcon={<ArrowBackIcon />}
+        onClick={handleGoBack}
+        sx={{ mb: 1 }}
+      >
+        Back to Merchants
+      </Button>
 
-        <Card>
-          <CardContent>
-            <Grid container spacing={3}>
-              <Grid xs={12} md={6} component="div">
-                <Typography variant="h5" gutterBottom>{merchant.name}</Typography>
-                <Typography variant="body2" color="text.secondary" gutterBottom>Merchant ID: {merchant.id}</Typography>
-                {merchant.user_id && <Typography variant="body2" color="text.secondary" gutterBottom>User ID: {merchant.user_id}</Typography>}
+      <Typography variant="h5" gutterBottom>
+        Merchant Details
+      </Typography>
 
-                <Divider sx={{ my: 2 }} />
-                <Typography variant="subtitle1" gutterBottom>Contact Information</Typography>
-                <Stack spacing={1}>
-                  <Typography variant="body2"><strong>Email:</strong> {merchant.email}</Typography>
-                  <Typography variant="body2"><strong>Phone:</strong> {merchant.phone}</Typography>
-                </Stack>
+      <Grid container spacing={3}>
+        {/* Merchant Profile Card */}
+        <Grid item xs={12} md={4}>
+          <Card sx={{ height: '100%' }}>
+            <CardContent>
+              <Box display="flex" flexDirection="column" alignItems="center" p={2}>
+                <Avatar sx={{ 
+                  width: 120, 
+                  height: 120, 
+                  fontSize: 48,
+                  mb: 2,
+                  bgcolor: 'primary.main'
+                }}>
+                  {merchant.name.split(' ').map(n => n[0]).join('')}
+                </Avatar>
+                <Typography variant="h5" align="center">
+                  {merchant.name}
+                </Typography>
+                <Typography color="text.secondary" align="center">
+                  Merchant
+                </Typography>
+                {/*{merchant.status && (
+                  <Chip 
+                    label={merchant.status} 
+                    color={
+                      merchant.status === 'active' ? 'success' : 
+                      merchant.status === 'pending' ? 'warning' : 'error'
+                    } 
+                    sx={{ mt: 1 }}
+                  />
+                )}*/}
+              </Box>
 
-                <Divider sx={{ my: 2 }} />
-                <Typography variant="subtitle1" gutterBottom>Financial Information</Typography>
-                <Stack spacing={1}>
-                  <Typography variant="body2"><strong>Float:</strong> ${merchant.float}</Typography>
-                  <Typography variant="body2"><strong>Status:</strong> {merchant.status}</Typography>
-                </Stack>
+              <Divider sx={{ my: 2 }} />
+
+              <Stack spacing={2}>
+                <Box>
+                  <Typography variant="subtitle2" color="text.secondary">
+                    Email
+                  </Typography>
+                  <Typography>{merchant.email}</Typography>
+                </Box>
+
+                <Box>
+                  <Typography variant="subtitle2" color="text.secondary">
+                    Phone
+                  </Typography>
+                  <Typography>{merchant.phone}</Typography>
+                </Box>
+
+                <Box>
+                  <Typography variant="subtitle2" color="text.secondary">
+                    Merchant Code
+                  </Typography>
+                  <Typography>{merchant.merchant_code}</Typography>
+                </Box>
+
+                <Box>
+                  {/*<Typography variant="subtitle2" color="text.secondary">
+                    Float Balance
+                  </Typography>*/}
+                  <Typography>${merchant.float.toLocaleString()}</Typography>
+                </Box>
+              </Stack>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        {/* Main Content Area */}
+        <Grid item xs={12} md={8}>
+          {/* Connections Overview */}
+          <Card>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>
+                Connections
+              </Typography>
+              <Typography variant="body2" color="text.secondary" paragraph>
+                This merchant is connected to the following entities through approved requests:
+              </Typography>
+
+              <Grid container spacing={2} sx={{ mt: 2 }}>
+                <Grid item xs={6} sm={3}>
+                  <Paper elevation={0} sx={{ 
+                    p: 2, 
+                    borderRadius: 2,
+                    border: '1px solid',
+                    borderColor: 'divider',
+                    textAlign: 'center'
+                  }}>
+                    <StoreIcon color="primary" sx={{ fontSize: 40 }} />
+                    <Typography variant="h5" sx={{ mt: 1 }}>
+                      {connectionCounts.merchants}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Merchants
+                    </Typography>
+                  </Paper>
+                </Grid>
+
+                <Grid item xs={6} sm={3}>
+                  <Paper elevation={0} sx={{ 
+                    p: 2, 
+                    borderRadius: 2,
+                    border: '1px solid',
+                    borderColor: 'divider',
+                    textAlign: 'center'
+                  }}>
+                    <GavelIcon color="secondary" sx={{ fontSize: 40 }} />
+                    <Typography variant="h5" sx={{ mt: 1 }}>
+                      {connectionCounts.underwriters}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Underwriters
+                    </Typography>
+                  </Paper>
+                </Grid>
+
+                <Grid item xs={6} sm={3}>
+                  <Paper elevation={0} sx={{ 
+                    p: 2, 
+                    borderRadius: 2,
+                    border: '1px solid',
+                    borderColor: 'divider',
+                    textAlign: 'center'
+                  }}>
+                    <BusinessIcon color="info" sx={{ fontSize: 40 }} />
+                    <Typography variant="h5" sx={{ mt: 1 }}>
+                      {connectionCounts.employers}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Employers
+                    </Typography>
+                  </Paper>
+                </Grid>
+
+                <Grid item xs={6} sm={3}>
+                  <Paper elevation={0} sx={{ 
+                    p: 2, 
+                    borderRadius: 2,
+                    border: '1px solid',
+                    borderColor: 'divider',
+                    textAlign: 'center'
+                  }}>
+                    <PeopleIcon color="success" sx={{ fontSize: 40 }} />
+                    <Typography variant="h5" sx={{ mt: 1 }}>
+                      {connectionCounts.clients}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Clients
+                    </Typography>
+                  </Paper>
+                </Grid>
               </Grid>
+            </CardContent>
+          </Card>
 
-              <Grid xs={12} md={6} component="div">
-                <Typography variant="subtitle1" gutterBottom>Employment Information</Typography>
-                <Stack spacing={1}>
-                  <Typography variant="body2"><strong>Employer:</strong> {merchant.employer_name}</Typography>
-                </Stack>
-
-                <Divider sx={{ my: 2 }} />
-                <Typography variant="subtitle1" gutterBottom>Additional Information</Typography>
-                <Stack spacing={1}>
-                  <Typography variant="body2"><strong>Ratings:</strong> {merchant.ratings}/5</Typography>
-                  <Typography variant="body2"><strong>Comments:</strong> {merchant.comments || "No comments available"}</Typography>
-                  {merchant.created_at && <Typography variant="body2"><strong>Created:</strong> {new Date(merchant.created_at).toLocaleString()}</Typography>}
-                  {merchant.updated_at && <Typography variant="body2"><strong>Last Updated:</strong> {new Date(merchant.updated_at).toLocaleString()}</Typography>}
-                </Stack>
+          {/* Additional Merchant Information */}
+          <Card sx={{ mt: 3 }}>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>
+                Additional Information
+              </Typography>
+              <Grid container spacing={2}>
+                <Grid item xs={12} sm={6}>
+                  <Typography variant="subtitle2" color="text.secondary">
+                    Merchant ID
+                  </Typography>
+                  <Typography>{merchant.id}</Typography>
+                </Grid>
+                
+                {merchant.user_id && (
+                  <Grid item xs={12} sm={6}>
+                    <Typography variant="subtitle2" color="text.secondary">
+                      User ID
+                    </Typography>
+                    <Typography>{merchant.user_id}</Typography>
+                  </Grid>
+                )}
               </Grid>
-            </Grid>
-          </CardContent>
+            </CardContent>
+          </Card>
 
-          <Divider />
-          <CardActions>
-            {!merchant.is_linked ? (
-              <Button variant="contained" color="primary" onClick={handleRequestLink}>Request Link to Merchant</Button>
-            ) : (
-              <Typography color="success.main">You are already linked to this merchant</Typography>
-            )}
-          </CardActions>
-        </Card>
+          {/* Ratings and Comments Section */}
+          <Card sx={{ mt: 3 }}>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>
+                Ratings & Comments
+              </Typography>
+              
+              {loadingRatings ? (
+                <Box display="flex" justifyContent="center" py={4}>
+                  <CircularProgress />
+                </Box>
+              ) : (
+                <>
+                  {merchant.average_rating !== null && (
+                    <Box display="flex" alignItems="center" mb={2}>
+                      <StarIcon color="warning" />
+                      <Typography variant="h6" ml={0.5}>
+                        {merchant.average_rating?.toFixed(1)}/5
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary" ml={1}>
+                        ({merchant.ratings?.length || 0} ratings)
+                      </Typography>
+                    </Box>
+                  )}
+
+                  {merchant.ratings && merchant.ratings.length > 0 ? (
+                    <Stack spacing={2}>
+                      {merchant.ratings
+                        .filter(rating => rating.comment) // Only show ratings with comments
+                        .map((rating, index) => (
+                          <Paper key={index} elevation={2} sx={{ p: 2 }}>
+                            <Box display="flex" justifyContent="space-between">
+                              <Typography fontWeight="bold">
+                                {rating.rater_name}
+                              </Typography>
+                              <Box display="flex" alignItems="center">
+                                <StarIcon color="warning" fontSize="small" />
+                                <Typography ml={0.5}>{rating.rating}/5</Typography>
+                              </Box>
+                            </Box>
+                            <Typography variant="body2" sx={{ mt: 1 }}>
+                              {rating.comment}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary" display="block" mt={1}>
+                              {new Date(rating.created_at).toLocaleString()}
+                            </Typography>
+                          </Paper>
+                        ))}
+                      
+                      {merchant.ratings.filter(r => r.comment).length === 0 && (
+                        <Typography color="text.secondary">No comments available</Typography>
+                      )}
+                    </Stack>
+                  ) : (
+                    <Typography color="text.secondary">
+                      No ratings or comments yet
+                    </Typography>
+                  )}
+                </>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Link Button */}
+          <Card sx={{ mt: 3 }}>   
+            <CardActions>
+              {user?.user_type === 'underwriter' && !merchant.is_linked && (
+                <Button 
+                  variant="contained" 
+                  color="primary" 
+                  onClick={handleRequestLink}
+                  disabled={!merchant.user_id}
+                  fullWidth
+                >
+                  Request Link to Merchant
+                </Button>
+              )}
+              {user?.user_type === 'underwriter' && merchant.is_linked && (
+                <Typography color="success.main" sx={{ p: 2 }}>
+                  You are already linked to this merchant
+                </Typography>
+              )}
+            </CardActions>
+          </Card>
+        </Grid>
       </Grid>
 
       <Snackbar
@@ -280,6 +603,6 @@ export default function MerchantDetails(): React.JSX.Element {
           {snackbarMessage}
         </Alert>
       </Snackbar>
-    </Grid>
+    </Box>
   )
 }

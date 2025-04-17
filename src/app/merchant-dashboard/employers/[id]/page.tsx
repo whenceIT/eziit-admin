@@ -14,13 +14,23 @@ import {
   Box,
   Stack,
   Snackbar,
+  Grid,
+  Paper,
+  Avatar,
+  Chip,
 } from "@mui/material"
-import Grid from "@mui/material/Unstable_Grid2"
 import { useUser } from "@/hooks/use-user"
+import {
+  People as PeopleIcon,
+  Store as StoreIcon,
+  Business as BusinessIcon,
+  Gavel as GavelIcon,
+  ArrowBack as ArrowBackIcon,
+  Star as StarIcon,
+} from "@mui/icons-material"
 
 const API_BASE_URL = "https://ezitt.whencefinancesystem.com"
 
-// 1. Added Request interface to type API response
 interface Request {
   id: string
   user_id: string
@@ -36,6 +46,13 @@ interface Request {
 
 type AlertSeverity = "success" | "error" | "info" | "warning"
 
+interface UserRating {
+  rating: number
+  comment: string
+  created_at: string
+  rater_name: string
+}
+
 interface Employer {
   id: number
   user_id: string | null
@@ -48,12 +65,20 @@ interface Employer {
   transactions: string | null
   employer: string | null
   employer_name?: string
-  ratings: number | null
   comments: string | null
   status: string
   created_at?: string
   updated_at?: string
   is_linked?: boolean
+  average_rating?: number | null
+  ratings?: UserRating[]
+}
+
+interface ConnectionCounts {
+  merchants: number
+  underwriters: number
+  employers: number
+  clients: number
 }
 
 export default function EmployerDetailsPage(): React.JSX.Element {
@@ -63,11 +88,17 @@ export default function EmployerDetailsPage(): React.JSX.Element {
   const { user } = useUser()
   const [employer, setEmployer] = React.useState<Employer | null>(null)
   const [loading, setLoading] = React.useState(true)
+  const [loadingRatings, setLoadingRatings] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
   const [snackbarOpen, setSnackbarOpen] = React.useState(false)
   const [snackbarMessage, setSnackbarMessage] = React.useState("")
-  // 3. Updated state type to use AlertSeverity
   const [snackbarSeverity, setSnackbarSeverity] = React.useState<AlertSeverity>("success")
+  const [connectionCounts, setConnectionCounts] = React.useState<ConnectionCounts>({
+    merchants: 0,
+    underwriters: 0,
+    employers: 0,
+    clients: 0
+  })
 
   React.useEffect(() => {
     const fetchEmployerDetails = async () => {
@@ -78,6 +109,8 @@ export default function EmployerDetailsPage(): React.JSX.Element {
       }
 
       try {
+        setLoading(true)
+        
         const employerResponse = await fetch(`${API_BASE_URL}/employer/${employerId}`)
         if (!employerResponse.ok) {
           throw new Error(`Failed to fetch employer details: ${employerResponse.statusText}`)
@@ -85,37 +118,65 @@ export default function EmployerDetailsPage(): React.JSX.Element {
 
         const employerData = await employerResponse.json()
 
-        let isLinked = false
+        if (!employerData) {
+          throw new Error("Received empty employer data")
+        }
 
-        try {
-          const requestsResponse = await fetch(`${API_BASE_URL}/requests`)
-          if (requestsResponse.ok) {
-            // 4. Added type annotation for API response
-            const allRequests: Request[] = await requestsResponse.json()
+        // Fetch all requests to count connections
+        const requestsResponse = await fetch(`${API_BASE_URL}/requests`)
+        if (!requestsResponse.ok) throw new Error('Failed to fetch connections')
+        const allRequests: Request[] = await requestsResponse.json()
+        
+        // Filter approved requests where this employer is either requester or recipient
+        const employerRequests = allRequests.filter(request => 
+          request.status === 'approved' && 
+          ((request.requester_id === employerData.user_id) || 
+          (request.recipient_id === employerData.user_id))
+        )
+        
+        // Count connections by type, excluding self-connections
+        const counts = {
+          merchants: employerRequests.filter(req => 
+            (req.requester_type === 'merchant' && req.requester_id !== employerData.user_id) || 
+            (req.recipient_type === 'merchant' && req.recipient_id !== employerData.user_id)
+          ).length,
+          
+          underwriters: employerRequests.filter(req => 
+            (req.requester_type === 'underwriter' && req.requester_id !== employerData.user_id) || 
+            (req.recipient_type === 'underwriter' && req.recipient_id !== employerData.user_id)
+          ).length,
+          
+          employers: employerRequests.filter(req => 
+            (req.requester_type === 'employer' && req.requester_id !== employerData.user_id) || 
+            (req.recipient_type === 'employer' && req.recipient_id !== employerData.user_id)
+          ).length,
+          
+          clients: employerRequests.filter(req => 
+            (req.requester_type === 'client' && req.requester_id !== employerData.user_id) || 
+            (req.recipient_type === 'client' && req.recipient_id !== employerData.user_id)
+          ).length
+        }
+
+        setConnectionCounts(counts)
+
+        let isLinked = false
+        const relevantRequests = allRequests.filter((req: Request) => {
+          if (req.request_type !== "merchant-employer" && req.request_type !== "employer-merchant") return false
+          
+          const involvesMerchant = 
+            (req.requester_type === "merchant" && req.requester_id === user.id) || 
+            (req.recipient_type === "merchant" && req.recipient_id === user.id)
             
-            // 5. Added type annotation for req parameter
-            const relevantRequests = allRequests.filter((req: Request) => {
-              if (req.request_type !== "merchant-employer" && req.request_type !== "employer-merchant") return false
-              
-              const involvesMerchant = 
-                (req.requester_type === "merchant" && req.requester_id === user.id) || 
-                (req.recipient_type === "merchant" && req.recipient_id === user.id)
-                
-              const involvesEmployer = 
-                (req.requester_type === "employer" && req.requester_id === employerData.user_id) || 
-                (req.recipient_type === "employer" && req.recipient_id === employerData.user_id)
-                
-              return involvesMerchant && involvesEmployer
-            })
+          const involvesEmployer = 
+            (req.requester_type === "employer" && req.requester_id === employerData.user_id) || 
+            (req.recipient_type === "employer" && req.recipient_id === employerData.user_id)
             
-            const approvedRequest = relevantRequests.find(req => req.status === "approved")
-            if (approvedRequest) {
-              isLinked = true
-            }
-          }
-        } catch (err) {
-          console.error("Error checking relationship status:", err)
-          isLinked = false
+          return involvesMerchant && involvesEmployer
+        })
+        
+        const approvedRequest = relevantRequests.find(req => req.status === "approved")
+        if (approvedRequest) {
+          isLinked = true
         }
 
         let userData = { first_name: "", last_name: "", email: "", phone: "", organisation_name: "" }
@@ -135,6 +196,31 @@ export default function EmployerDetailsPage(): React.JSX.Element {
           }
         }
 
+        // Fetch ratings and comments
+        setLoadingRatings(true)
+        let averageRating = null
+        let employerRatings: UserRating[] = []
+        
+        try {
+          if (employerData.user_id) {
+            const ratingsResponse = await fetch(`${API_BASE_URL}/user/${employerData.user_id}/ratings`)
+            if (!ratingsResponse.ok) throw new Error('Failed to fetch ratings')
+            
+            const ratingsData = await ratingsResponse.json()
+            employerRatings = ratingsData.ratings || []
+            
+            // Calculate average rating
+            if (employerRatings.length > 0) {
+              const sum = employerRatings.reduce((acc, curr) => acc + curr.rating, 0)
+              averageRating = sum / employerRatings.length
+            }
+          }
+        } catch (ratingError) {
+          console.error("Error fetching ratings:", ratingError)
+        } finally {
+          setLoadingRatings(false)
+        }
+
         setEmployer({
           id: employerData.id,
           user_id: employerData.user_id,
@@ -147,12 +233,13 @@ export default function EmployerDetailsPage(): React.JSX.Element {
           transactions: employerData.transactions || "N/A",
           employer: employerData.employer_id ? `ID: ${employerData.employer_id}` : "N/A",
           employer_name: employerName,
-          ratings: employerData.ratings || 0,
           comments: employerData.comments || "",
           status: employerData.status || "active",
           created_at: employerData.created_at,
           updated_at: employerData.updated_at,
-          is_linked: isLinked
+          is_linked: isLinked,
+          average_rating: averageRating,
+          ratings: employerRatings
         })
 
         setLoading(false)
@@ -178,10 +265,8 @@ export default function EmployerDetailsPage(): React.JSX.Element {
 
       const requestsResponse = await fetch(`${API_BASE_URL}/requests`)
       if (requestsResponse.ok) {
-        
         const allRequests: Request[] = await requestsResponse.json()
         
-       
         const pendingRequests = allRequests.filter((req: Request) => {
           if (req.request_type !== "merchant-employer") return false
           if (req.status !== "pending") return false
@@ -199,7 +284,7 @@ export default function EmployerDetailsPage(): React.JSX.Element {
         
         if (pendingRequests.length > 0) {
           setSnackbarMessage("A pending link request already exists for this employer")
-          setSnackbarSeverity("info") 
+          setSnackbarSeverity("info")
           setSnackbarOpen(true)
           return
         }
@@ -246,115 +331,319 @@ export default function EmployerDetailsPage(): React.JSX.Element {
     setSnackbarOpen(false)
   }
 
-  if (loading) return <CircularProgress />
+  if (loading) return (
+    <Box display="flex" justifyContent="center" alignItems="center" minHeight="80vh">
+      <CircularProgress />
+    </Box>
+  )
+
   if (error) return <Alert severity="error">{error}</Alert>
   if (!employer) return <Alert severity="error">Employer not found</Alert>
 
   return (
-    <Grid container spacing={3}>
-      <Grid xs={12}>
-        <Box sx={{ mb: 3, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <Button onClick={handleGoBack} variant="outlined">
-            Back
-          </Button>
-          <Typography variant="h4">Employer Details</Typography>
-          <Box />
-        </Box>
+    <Box sx={{ p: 1 }}>
+      <Button 
+        startIcon={<ArrowBackIcon />}
+        onClick={handleGoBack}
+        sx={{ mb: 1 }}
+      >
+        Back to Employers
+      </Button>
 
-        <Card>
-          <CardContent>
-            <Grid container spacing={3}>
-              <Grid xs={12} md={6}>
-                <Typography variant="h5" gutterBottom>
+      <Typography variant="h5" gutterBottom>
+        Employer Details
+      </Typography>
+
+      <Grid container spacing={3}>
+        {/* Employer Profile Card */}
+        <Grid item xs={12} md={4}>
+          <Card sx={{ height: '100%' }}>
+            <CardContent>
+              <Box display="flex" flexDirection="column" alignItems="center" p={2}>
+                <Avatar sx={{ 
+                  width: 120, 
+                  height: 120, 
+                  fontSize: 48,
+                  mb: 2,
+                  bgcolor: 'primary.main'
+                }}>
+                  {employer.name.split(' ').map(n => n[0]).join('')}
+                </Avatar>
+                <Typography variant="h5" align="center">
                   {employer.name}
                 </Typography>
-                <Typography variant="body2" color="text.secondary" gutterBottom>
-                  Employer ID: {employer.id}
+                <Typography color="text.secondary" align="center">
+                  Employer
                 </Typography>
-                {employer.user_id && (
-                  <Typography variant="body2" color="text.secondary" gutterBottom>
-                    User ID: {employer.user_id}
+                {employer.organisation_name && (
+                  <Typography color="text.secondary" align="center">
+                    {employer.organisation_name}
                   </Typography>
                 )}
+              </Box>
 
-                <Divider sx={{ my: 2 }} />
+              <Divider sx={{ my: 2 }} />
 
-                <Typography variant="subtitle1" gutterBottom>
-                  Contact Information
-                </Typography>
-                <Stack spacing={1}>
-                  <Typography variant="body2">
-                    <strong>Email:</strong> {employer.email}
+              <Stack spacing={2}>
+                <Box>
+                  <Typography variant="subtitle2" color="text.secondary">
+                    Email
                   </Typography>
-                  <Typography variant="body2">
-                    <strong>Phone:</strong> {employer.phone}
-                  </Typography>
-                  <Typography variant="body2">
-                    <strong>Organization:</strong> {employer.organisation_name}
-                  </Typography>
-                </Stack>
+                  <Typography>{employer.email}</Typography>
+                </Box>
 
-                <Divider sx={{ my: 2 }} />
+                <Box>
+                  <Typography variant="subtitle2" color="text.secondary">
+                    Phone
+                  </Typography>
+                  <Typography>{employer.phone}</Typography>
+                </Box>
 
-                <Typography variant="subtitle1" gutterBottom>
-                  Financial Information
-                </Typography>
-                <Stack spacing={1}>
-                  <Typography variant="body2">
-                    <strong>Float:</strong> ${employer.float}
+                <Box>
+                  {/*<Typography variant="subtitle2" color="text.secondary">
+                    Average Rating
                   </Typography>
-                  <Typography variant="body2">
-                    <strong>Status:</strong> {employer.status}
-                  </Typography>
-                </Stack>
-              </Grid>
+                  <Typography>
+                    {employer.average_rating ? `${employer.average_rating.toFixed(1)}/5` : 'No ratings yet'}
+                  </Typography>*/}
+                </Box>
+              </Stack>
+            </CardContent>
+          </Card>
+        </Grid>
 
-              <Grid xs={12} md={6}>
-                <Divider sx={{ my: 2 }} />
-
-                <Typography variant="subtitle1" gutterBottom>
-                  Additional Information
-                </Typography>
-                <Stack spacing={1}>
-                  <Typography variant="body2">
-                    <strong>Ratings:</strong> {employer.ratings}/5
-                  </Typography>
-                  <Typography variant="body2">
-                    <strong>Comments:</strong> {employer.comments || "No comments available"}
-                  </Typography>
-                  {employer.created_at && (
-                    <Typography variant="body2">
-                      <strong>Created:</strong> {new Date(employer.created_at).toLocaleString()}
-                    </Typography>
-                  )}
-                  {employer.updated_at && (
-                    <Typography variant="body2">
-                      <strong>Last Updated:</strong> {new Date(employer.updated_at).toLocaleString()}
-                    </Typography>
-                  )}
-                </Stack>
-              </Grid>
-            </Grid>
-          </CardContent>
-          <Divider />
-          <CardActions>
-            {!employer.is_linked && (
-              <Button 
-                variant="contained" 
-                color="primary" 
-                onClick={handleRequestLink}
-                disabled={!user?.id || !employer.user_id}
-              >
-                Request Link to Employer
-              </Button>
-            )}
-            {employer.is_linked && (
-              <Typography color="success.main">
-                You are already linked to this employer
+        {/* Main Content Area */}
+        <Grid item xs={12} md={8}>
+          {/* Connections Overview */}
+          <Card>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>
+                Connections
               </Typography>
-            )}
-          </CardActions>
-        </Card>
+              <Typography variant="body2" color="text.secondary" paragraph>
+                This employer is connected to the following entities through approved requests:
+              </Typography>
+
+              <Grid container spacing={2} sx={{ mt: 2 }}>
+                <Grid item xs={6} sm={3}>
+                  <Paper elevation={0} sx={{ 
+                    p: 2, 
+                    borderRadius: 2,
+                    border: '1px solid',
+                    borderColor: 'divider',
+                    textAlign: 'center'
+                  }}>
+                    <StoreIcon color="primary" sx={{ fontSize: 40 }} />
+                    <Typography variant="h5" sx={{ mt: 1 }}>
+                      {connectionCounts.merchants}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Merchants
+                    </Typography>
+                  </Paper>
+                </Grid>
+
+                <Grid item xs={6} sm={3}>
+                  <Paper elevation={0} sx={{ 
+                    p: 2, 
+                    borderRadius: 2,
+                    border: '1px solid',
+                    borderColor: 'divider',
+                    textAlign: 'center'
+                  }}>
+                    <GavelIcon color="secondary" sx={{ fontSize: 40 }} />
+                    <Typography variant="h5" sx={{ mt: 1 }}>
+                      {connectionCounts.underwriters}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Underwriters
+                    </Typography>
+                  </Paper>
+                </Grid>
+
+                <Grid item xs={6} sm={3}>
+                  <Paper elevation={0} sx={{ 
+                    p: 2, 
+                    borderRadius: 2,
+                    border: '1px solid',
+                    borderColor: 'divider',
+                    textAlign: 'center'
+                  }}>
+                    <BusinessIcon color="info" sx={{ fontSize: 40 }} />
+                    <Typography variant="h5" sx={{ mt: 1 }}>
+                      {connectionCounts.employers}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Employers
+                    </Typography>
+                  </Paper>
+                </Grid>
+
+                <Grid item xs={6} sm={3}>
+                  <Paper elevation={0} sx={{ 
+                    p: 2, 
+                    borderRadius: 2,
+                    border: '1px solid',
+                    borderColor: 'divider',
+                    textAlign: 'center'
+                  }}>
+                    <PeopleIcon color="success" sx={{ fontSize: 40 }} />
+                    <Typography variant="h5" sx={{ mt: 1 }}>
+                      {connectionCounts.clients}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Clients
+                    </Typography>
+                  </Paper>
+                </Grid>
+              </Grid>
+            </CardContent>
+          </Card>
+
+          {/* Additional Employer Information */}
+          <Card sx={{ mt: 3 }}>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>
+                Additional Information
+              </Typography>
+              <Grid container spacing={2}>
+                <Grid item xs={12} sm={6}>
+                  <Typography variant="subtitle2" color="text.secondary">
+                    Employer ID
+                  </Typography>
+                  <Typography>{employer.id}</Typography>
+                </Grid>
+                {employer.user_id && (
+                  <Grid item xs={12} sm={6}>
+                    <Typography variant="subtitle2" color="text.secondary">
+                      User ID
+                    </Typography>
+                    <Typography>{employer.user_id}</Typography>
+                  </Grid>
+                )}
+                <Grid item xs={12} sm={6}>
+                  <Typography variant="subtitle2" color="text.secondary">
+                    Organisation
+                  </Typography>
+                  <Typography>{employer.organisation_name || "N/A"}</Typography>
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <Typography variant="subtitle2" color="text.secondary">
+                    Average Rating
+                  </Typography>
+                  <Typography>
+                    {employer.average_rating ? `${employer.average_rating.toFixed(1)}/5` : 'No ratings yet'}
+                  </Typography>
+                </Grid>
+                {employer.created_at && (
+                  <Grid item xs={12} sm={6}>
+                    <Typography variant="subtitle2" color="text.secondary">
+                      Account Created
+                    </Typography>
+                    <Typography>
+                      {new Date(employer.created_at).toLocaleDateString()}
+                    </Typography>
+                  </Grid>
+                )}
+                {employer.updated_at && (
+                  <Grid item xs={12} sm={6}>
+                    <Typography variant="subtitle2" color="text.secondary">
+                      Last Updated
+                    </Typography>
+                    <Typography>
+                      {new Date(employer.updated_at).toLocaleDateString()}
+                    </Typography>
+                  </Grid>
+                )}
+              </Grid>
+            </CardContent>
+          </Card>
+
+          {/* Ratings and Comments Section */}
+                    <Card sx={{ mt: 3 }}>
+                      <CardContent>
+                        <Typography variant="h6" gutterBottom>
+                          Ratings & Comments
+                        </Typography>
+                        
+                        {loadingRatings ? (
+                          <Box display="flex" justifyContent="center" py={4}>
+                            <CircularProgress />
+                          </Box>
+                        ) : (
+                          <>
+                            {employer.average_rating !== null && (
+                              <Box display="flex" alignItems="center" mb={2}>
+                                <StarIcon color="warning" />
+                                <Typography variant="h6" ml={0.5}>
+                                  {employer.average_rating?.toFixed(1)}/5
+                                </Typography>
+                                <Typography variant="caption" color="text.secondary" ml={1}>
+                                  ({employer.ratings?.length || 0} ratings)
+                                </Typography>
+                              </Box>
+                            )}
+          
+                            {employer.ratings && employer.ratings.length > 0 ? (
+                              <Stack spacing={2}>
+                                {employer.ratings
+                                  .filter(rating => rating.comment) // Only show ratings with comments
+                                  .map((rating, index) => (
+                                    <Paper key={index} elevation={2} sx={{ p: 2 }}>
+                                      <Box display="flex" justifyContent="space-between">
+                                        <Typography fontWeight="bold">
+                                          {rating.rater_name}
+                                        </Typography>
+                                        <Box display="flex" alignItems="center">
+                                          <StarIcon color="warning" fontSize="small" />
+                                          <Typography ml={0.5}>{rating.rating}/5</Typography>
+                                        </Box>
+                                      </Box>
+                                      <Typography variant="body2" sx={{ mt: 1 }}>
+                                        {rating.comment}
+                                      </Typography>
+                                      <Typography variant="caption" color="text.secondary" display="block" mt={1}>
+                                        {new Date(rating.created_at).toLocaleString()}
+                                      </Typography>
+                                    </Paper>
+                                  ))}
+                                
+                                {employer.ratings.filter(r => r.comment).length === 0 && (
+                                  <Typography color="text.secondary">No comments available</Typography>
+                                )}
+                              </Stack>
+                            ) : (
+                              <Typography color="text.secondary">
+                                No ratings or comments yet
+                              </Typography>
+                            )}
+                          </>
+                        )}
+                      </CardContent>
+                    </Card>
+
+          {/* Link Button */}
+          <Card sx={{ mt: 3 }}>
+            <CardActions>
+              {!employer.is_linked && (
+                <Button 
+                  variant="contained" 
+                  color="primary" 
+                  onClick={handleRequestLink}
+                  disabled={!user?.id || !employer.user_id}
+                  fullWidth
+                >
+                  Request Link to Employer
+                </Button>
+              )}
+              {employer.is_linked && (
+                <Typography color="success.main" sx={{ p: 2 }}>
+                  You are already linked to this employer
+                </Typography>
+              )}
+            </CardActions>
+          </Card>
+        </Grid>
       </Grid>
 
       <Snackbar
@@ -367,6 +656,6 @@ export default function EmployerDetailsPage(): React.JSX.Element {
           {snackbarMessage}
         </Alert>
       </Snackbar>
-    </Grid>
+    </Box>
   )
 }

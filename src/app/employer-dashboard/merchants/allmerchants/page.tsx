@@ -104,7 +104,7 @@ export default function AllMerchants(): React.JSX.Element {
   }
 
   const handleViewDetails = (merchantId: number) => {
-    router.push(`/underwriter-dashboard/merchants/${merchantId}`)
+    router.push(`/employer-dashboard/merchants/${merchantId}`)
   }
 
   if (loading) return <CircularProgress />
@@ -127,6 +127,10 @@ export default function AllMerchants(): React.JSX.Element {
             <EmployerMerchantsTable 
               merchants={paginatedMerchants} 
               onViewDetails={handleViewDetails} 
+              page={page}
+              rowsPerPage={rowsPerPage}
+              onPageChange={handleChangePage}
+              onRowsPerPageChange={handleChangeRowsPerPage}
             />
             <TablePagination
               rowsPerPageOptions={[5, 10, 25]}

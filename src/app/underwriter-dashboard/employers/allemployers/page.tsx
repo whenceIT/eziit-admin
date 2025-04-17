@@ -20,8 +20,9 @@ export interface Employer {
   email: string;
   phone: number;
   ratings: number | null;
+  organization: string;
 }
-
+//
 export default function AllEmployers(): React.JSX.Element {
   const router = useRouter();
   const [employers, setEmployers] = React.useState<Employer[]>([]);

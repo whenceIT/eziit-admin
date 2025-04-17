@@ -1,21 +1,36 @@
 // userstable.tsx
 import React from "react";
-import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Button } from "@mui/material";
+import { 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableContainer, 
+  TableHead, 
+  TableRow, 
+  Paper, 
+  Button 
+} from "@mui/material";
+import { useRouter } from "next/navigation";
 
 export interface User {
   id: string;
   email: string;
-  user_type: string; // Changed from enum to string for more flexibility
+  user_type: string;
   first_name: string;
   last_name: string;
 }
 
 interface UsersTableProps {
   users: User[];
-  onLoginAsUser: (userId: string) => void;
 }
 
-export const UsersTable: React.FC<UsersTableProps> = ({ users, onLoginAsUser }) => {
+export const UsersTable: React.FC<UsersTableProps> = ({ users }) => {
+  const router = useRouter();
+
+  const handleViewDetails = (userId: string) => {
+    router.push(`/dashboard/users/${userId}`);
+  };
+
   return (
     <TableContainer component={Paper}>
       <Table sx={{ minWidth: 650 }} aria-label="users table">
@@ -37,9 +52,9 @@ export const UsersTable: React.FC<UsersTableProps> = ({ users, onLoginAsUser }) 
                 <Button
                   variant="contained"
                   color="primary"
-                  onClick={() => onLoginAsUser(user.id)}
+                  onClick={() => handleViewDetails(user.id)}
                 >
-                  Login
+                  Details
                 </Button>
               </TableCell>
             </TableRow>

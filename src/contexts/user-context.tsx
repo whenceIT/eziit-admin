@@ -1,5 +1,5 @@
 "use client"
-
+//
 import type React from "react"
 import { createContext, useState, useEffect, useCallback } from "react"
 import { authClient } from "@/lib/auth/client"
@@ -19,6 +19,7 @@ interface UserContextType {
   ) => Promise<void>
   signOut: () => void
   updateUser: (userData: Partial<User>) => Promise<void>
+  
 }
 
 export const UserContext = createContext<UserContextType | undefined>(undefined)

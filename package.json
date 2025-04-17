@@ -28,6 +28,7 @@
     "@fontsource/roboto-mono": "5.0.18",
     "@heroicons/react": "^2.1.5",
     "@hookform/resolvers": "3.6.0",
+    "@mui/icons-material": "^5.15.20",
     "@mui/lab": "5.0.0-alpha.170",
     "@mui/material": "5.15.20",
     "@mui/system": "5.15.20",

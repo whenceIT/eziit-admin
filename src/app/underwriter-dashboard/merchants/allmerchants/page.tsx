@@ -8,21 +8,10 @@ import TablePagination from "@mui/material/TablePagination";
 import CircularProgress from "@mui/material/CircularProgress";
 import Alert from "@mui/material/Alert";
 import { useRouter } from "next/navigation";
-
 import { useUser } from "@/hooks/use-user";
-import { UnderwriterMerchantsTable } from "@/components/dashboard/underwriter/merchants";
+import { UnderwriterMerchantsTable, type Merchant } from "@/components/dashboard/underwriter/merchants";
 
 const API_BASE_URL = "https://ezitt.whencefinancesystem.com";
-
-export interface Merchant {
-  id: number;
-  user_id: string | null;
-  merchant_code: string;
-  stores: string | null;
-  name: string;
-  email: string;
-  phone: string | null;
-}
 
 export default function AllMerchants(): React.JSX.Element {
   const [merchants, setMerchants] = React.useState<Merchant[]>([]);
@@ -42,7 +31,6 @@ export default function AllMerchants(): React.JSX.Element {
       }
 
       try {
-       
         const merchantsResponse = await fetch(`${API_BASE_URL}/merchants`);
         if (!merchantsResponse.ok) {
           throw new Error(`Failed to fetch merchants: ${merchantsResponse.statusText}`);
@@ -51,77 +39,19 @@ export default function AllMerchants(): React.JSX.Element {
         const merchantsData = await merchantsResponse.json();
         console.log("All Merchants Data:", merchantsData);
 
-        const merchantsWithUserDetails = await Promise.all(
-          merchantsData.map(async (merchant: any) => {
-        
-            let name = "N/A";
-            let email = "N/A";
-            let phone = "N/A";
+        // Simplified merchant data mapping
+        const merchantsWithBasicDetails = merchantsData.map((merchant: any) => ({
+          id: merchant.id,
+          user_id: merchant.user_id,
+          merchant_code: merchant.merchant_code || "N/A",
+          stores: merchant.stores || "N/A",
+          name: merchant.name || "N/A", // Use merchant.name if available
+          email: merchant.email || "N/A", // Use merchant.email if available
+          phone: merchant.phone || "N/A", // Use merchant.phone if available
+        }));
 
-            if (merchant.user_id) {
-              try {
-       
-                const userResponse = await fetch(`${API_BASE_URL}/user/${merchant.user_id}`);
-                
-                if (userResponse.ok) {
-                  const userData = await userResponse.json();
-                  console.log(`User data for merchant ${merchant.id}:`, userData);
-                  
-                  const userInfo = userData.user || userData;
-                  
-                  if (userInfo) {
-                    name = `${userInfo.first_name || ""} ${userInfo.last_name || ""}`.trim() || "N/A";
-                    email = userInfo.email || "N/A";
-                    phone = userInfo.phone || "N/A";
-                  }
-                } else {
-                  console.warn(`Failed to fetch user details for merchant ${merchant.id}: ${userResponse.status}`);
-                  
-                  try {
-                    const altUserResponse = await fetch(`${API_BASE_URL}/users/${merchant.user_id}`);
-                    if (altUserResponse.ok) {
-                      const altUserData = await altUserResponse.json();
-                      console.log(`Alternative user data for merchant ${merchant.id}:`, altUserData);
-                      
-                      const altUserInfo = altUserData.user || altUserData;
-                      
-                      if (altUserInfo) {
-                        name = `${altUserInfo.first_name || ""} ${altUserInfo.last_name || ""}`.trim() || "N/A";
-                        email = altUserInfo.email || "N/A";
-                        phone = altUserInfo.phone || "N/A";
-                      }
-                    }
-                  } catch (altErr) {
-                    console.error(`Error fetching alternative user details for merchant ${merchant.id}:`, altErr);
-                  }
-                }
-              } catch (userErr) {
-                console.error(`Error fetching user details for merchant ${merchant.id}:`, userErr);
-              }
-            }
-
-            return {
-              id: merchant.id,
-              user_id: merchant.user_id,
-              merchant_code: merchant.merchant_code || "N/A",
-              transactions: merchant.transactions || "N/A",
-              stores: merchant.stores || "N/A",
-              ratings: merchant.ratings || 0,
-              comments: merchant.comments || "N/A",
-              clients: merchant.clients || "N/A",
-              employers: merchant.employers || "N/A",
-              status: merchant.status || "N/A",
-              underwriter_status: merchant.underwriter_status || "neutral",
-              underwriter_id: merchant.underwriter_id || "N/A",
-              name: name, 
-              email: email, 
-              phone: phone, 
-            };
-          })
-        );
-
-        console.log("Merchants with user details:", merchantsWithUserDetails);
-        setMerchants(merchantsWithUserDetails);
+        console.log("Processed Merchants Data:", merchantsWithBasicDetails);
+        setMerchants(merchantsWithBasicDetails);
         setLoading(false);
       } catch (err) {
         console.error("Error fetching data:", err);
@@ -140,7 +70,6 @@ export default function AllMerchants(): React.JSX.Element {
   };
 
   const handleViewDetails = (merchantId: number) => {
-   
     router.push(`/underwriter-dashboard/merchants/${merchantId}`);
   };
 
@@ -164,6 +93,15 @@ export default function AllMerchants(): React.JSX.Element {
             <UnderwriterMerchantsTable 
               merchants={paginatedMerchants} 
               onViewDetails={handleViewDetails}
+              count={merchants.length}
+              rowsPerPage={rowsPerPage}
+              page={page}
+              onPageChange={handleChangePage}
+              onRowsPerPageChange={handleChangeRowsPerPage}
+            />
+            <TablePagination
+              rowsPerPageOptions={[5, 10, 25]}
+              component="div"
               count={merchants.length}
               rowsPerPage={rowsPerPage}
               page={page}

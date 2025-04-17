@@ -1,8 +1,8 @@
 import axios from "axios"
 import type { User } from "@/types/user"
 import Cookies from "js-cookie" 
-
-const API_BASE_URL = "https://ezitt.whencefinancesystem.com"
+//
+const API_BASE_URL = "http://localhost:5000"
 const TOKEN_KEY = "auth-token"
 const USER_DATA_KEY = "user-data"
 
@@ -28,8 +28,13 @@ class AuthClient {
     if (typeof window !== "undefined") {
       this.token = localStorage.getItem(TOKEN_KEY) || Cookies.get(TOKEN_KEY) || null
       const userData = localStorage.getItem(USER_DATA_KEY)
-      if (userData) {
-        this.user = JSON.parse(userData)
+      if (userData && userData !== "undefined") {
+        try {
+          this.user = JSON.parse(userData)
+        } catch (e) {
+          console.error("Failed to parse user data:", e)
+          this.clearToken()  // Clear invalid data
+        }
       }
     }
   }
@@ -60,7 +65,7 @@ class AuthClient {
   }
 
   async signUp(params: SignUpParams): Promise<User> {
-    const response = await axios.post(`${API_BASE_URL}/create-user`, params)
+    const response = await axios.post(`http://localhost:5000/create-user`, params)
     const { token, user } = response.data
     this.setToken(token)
     this.setUser(user)
@@ -69,7 +74,7 @@ class AuthClient {
 
   async signIn(params: SignInParams): Promise<User> {
     try {
-      const response = await axios.post(`${API_BASE_URL}/sign-in`, params)
+      const response = await axios.post(`http://localhost:5000/sign-in`, params)
       const { token, user } = response.data
       this.setToken(token)
       this.setUser(user)
@@ -125,6 +130,10 @@ class AuthClient {
   getToken(): string | null {
     return this.token
   }
+
+  
+
+
 }
 
 export const authClient = new AuthClient()

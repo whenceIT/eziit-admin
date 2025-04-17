@@ -25,6 +25,8 @@ export const adminNavItems: NavItemConfig[] = [
             { key: "employerreports", title: "Employer Reports", href: paths.dashboard.reports.employerreports, }, ]},
   { key: 'statistics', title: 'Statistics', href: paths.dashboard.statistics, icon: 'chart-pie' },
   { key: 'users', title: 'Users', href: paths.dashboard.users, icon: 'user' },
+  { key: 'ratingsandcomments', title: 'Ratings and Comments', href: paths.dashboard.ratingsandcomments, icon: 'user' },
+  
 ];
 export const navItems = adminNavItems;
 
@@ -50,6 +52,8 @@ export const merchantNavItems: NavItemConfig[] = [
     ]},
   { key: 'stores', title: 'Stores', href: paths.dashboard.merchantStores, icon: 'stores' },
   { key: 'account', title: 'Account', href: paths.dashboard.account, icon: 'user' },
+  { key: 'ratingsandcomments', title: 'Ratings and Comments', href: paths.dashboard.ratingsandcomments, icon: 'user' },
+
   //{ key: '', title: 'Statistics', href: paths.dashboard.merchantStatistics, icon: 'chart-pie' },
 ];
 
@@ -74,7 +78,8 @@ export const employerNavItems: NavItemConfig[] = [
   
   { key: 'transactions', title: 'Transactions', href: paths.dashboard.employerTransactions, icon: 'chart-pie' },
   { key: 'employeraccount', title: 'Account', href: paths.dashboard.account, icon: 'user' },
-  //{ key: 'statistics', title: 'Statistics', href: paths.dashboard.merchantStatistics, icon: 'chart-pie' },
+  { key: 'ratingsandcomments', title: 'Ratings and Comments', href: paths.dashboard.ratingsandcomments, icon: 'user' },
+  //{ key: 'statistics', title: 'Statistics', href: paths.dashboard.employerStatistics, icon: 'chart-pie' },
 ];
 
 //underwriter dashboard
@@ -99,5 +104,6 @@ export const underwriterNavItems: NavItemConfig[] = [
   //{ key: 'stores', title: 'Stores', href: paths.dashboard.underwriterStores, icon: 'stores'},
   { key: 'transactions', title: 'Transactions', href: paths.dashboard.underwriterTransactions, icon: 'chart-pie' },
   { key: 'underwriteraccount', title: 'Account', href: paths.dashboard.account, icon: 'user' },
-  //{ key: 'statistics', title: 'Statistics', href: paths.dashboard.merchantStatistics, icon: 'chart-pie' },
+  { key: 'ratingsandcomments', title: 'Ratings and Comments', href: paths.dashboard.ratingsandcomments, icon: 'user' },
+  //{ key: 'statistics', title: 'Statistics', href: paths.dashboard.underwriterStatistics, icon: 'chart-pie' },
 ];

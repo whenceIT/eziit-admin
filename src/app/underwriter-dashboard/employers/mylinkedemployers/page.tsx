@@ -22,6 +22,7 @@ interface EmployerDetails {
   phone: string;
   ratings: number | null;
   comments: string | null;
+  organization: string;
   status: string;
   created_at?: string;
   updated_at?: string;
@@ -34,6 +35,8 @@ export interface Employer {
   email: string;
   phone: number;
   ratings: number | null;
+  organization: string;
+
 }
 
 export default function Employers(): React.JSX.Element {

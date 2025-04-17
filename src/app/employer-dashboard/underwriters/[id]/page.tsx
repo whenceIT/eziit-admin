@@ -14,12 +14,22 @@ import {
   Box,
   Stack,
   Chip,
+  Grid,
   Snackbar,
+  Paper,
+  Avatar,
 } from "@mui/material"
-import Grid from "@mui/material/Unstable_Grid2"
 import { useUser } from "@/hooks/use-user"
+import {
+  People as PeopleIcon,
+  Store as StoreIcon,
+  Business as BusinessIcon,
+  Gavel as GavelIcon,
+  ArrowBack as ArrowBackIcon,
+  Star as StarIcon, 
+} from "@mui/icons-material"
 
-const API_BASE_URL = "http://localhost:5000" 
+const API_BASE_URL = "https://ezitt.whencefinancesystem.com" 
 
 interface UnderwriterDetails {
   id: number
@@ -27,17 +37,45 @@ interface UnderwriterDetails {
   name: string
   email: string
   phone: string
-  organisation_name: string | null
+  organisation: string | null
   float: number | null
   transactions: string | null
   employer: string | null
   employer_name?: string
-  ratings: number | null
   comments: string | null
   status: string
   created_at?: string
   updated_at?: string
   is_linked?: boolean
+  average_rating?: number | null
+  ratings?: UserRating[]
+}
+
+interface UserRating {
+  rating: number
+  comment: string
+  created_at: string
+  rater_name: string
+}
+
+interface ConnectionCounts {
+  merchants: number
+  underwriters: number
+  employers: number
+  clients: number
+}
+
+interface Request {
+  id: string
+  user_id: string
+  request_type: string
+  requester_type: string
+  requester_id: string
+  recipient_type: string
+  recipient_id: string
+  status: string
+  created_at: string
+  updated_at: string
 }
 
 export default function UnderwriterDetails(): React.JSX.Element {
@@ -47,18 +85,19 @@ export default function UnderwriterDetails(): React.JSX.Element {
   const { user } = useUser()
 
   const [underwriter, setUnderwriter] = useState<UnderwriterDetails | null>(null)
+  const [connectionCounts, setConnectionCounts] = useState<ConnectionCounts>({
+    merchants: 0,
+    underwriters: 0,
+    employers: 0,
+    clients: 0
+  })
   const [loading, setLoading] = useState(true)
+  const [loadingRatings, setLoadingRatings] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [timeoutReached, setTimeoutReached] = useState(false)
   const [snackbarOpen, setSnackbarOpen] = useState(false)
   const [snackbarMessage, setSnackbarMessage] = useState("")
   const [snackbarSeverity, setSnackbarSeverity] = useState<"success" | "error" | "info">("success")
-
-  // Debug logging
-  console.log("Rendering UnderwriterDetails component")
-  console.log("Params:", params)
-  console.log("Underwriter ID:", underwriterId)
-  console.log("User:", user)
 
   useEffect(() => {
     const fetchUnderwriterDetails = async () => {
@@ -69,6 +108,8 @@ export default function UnderwriterDetails(): React.JSX.Element {
       }
 
       try {
+        setLoading(true)
+        
         console.log(`Fetching underwriter details for ID: ${underwriterId}`)
         
         const underwriterResponse = await fetch(`${API_BASE_URL}/underwriter/${underwriterId}`)
@@ -85,36 +126,63 @@ export default function UnderwriterDetails(): React.JSX.Element {
           throw new Error("Received empty underwriter data")
         }
 
+        // Fetch all requests to count connections
+        const requestsResponse = await fetch(`${API_BASE_URL}/requests`)
+        if (!requestsResponse.ok) throw new Error('Failed to fetch connections')
+        const allRequests: Request[] = await requestsResponse.json()
+        
+        // Filter approved requests where this underwriter is either requester or recipient
+        const underwriterRequests = allRequests.filter(request => 
+          request.status === 'approved' && 
+          ((request.requester_id === underwriterData.user_id) || 
+          (request.recipient_id === underwriterData.user_id))
+        )
+        
+        // Count connections by type, excluding self-connections
+        const counts = {
+          merchants: underwriterRequests.filter(req => 
+            (req.requester_type === 'merchant' && req.requester_id !== underwriterData.user_id) || 
+            (req.recipient_type === 'merchant' && req.recipient_id !== underwriterData.user_id)
+          ).length,
+          
+          underwriters: underwriterRequests.filter(req => 
+            (req.requester_type === 'underwriter' && req.requester_id !== underwriterData.user_id) || 
+            (req.recipient_type === 'underwriter' && req.recipient_id !== underwriterData.user_id)
+          ).length,
+          
+          employers: underwriterRequests.filter(req => 
+            (req.requester_type === 'employer' && req.requester_id !== underwriterData.user_id) || 
+            (req.recipient_type === 'employer' && req.recipient_id !== underwriterData.user_id)
+          ).length,
+          
+          clients: underwriterRequests.filter(req => 
+            (req.requester_type === 'client' && req.requester_id !== underwriterData.user_id) || 
+            (req.recipient_type === 'client' && req.recipient_id !== underwriterData.user_id)
+          ).length
+        }
+
+        setConnectionCounts(counts)
+
         let isLinked = false
-        try {
-          const requestsResponse = await fetch(`${API_BASE_URL}/requests`)
-          if (requestsResponse.ok) {
-            const allRequests = await requestsResponse.json()
-            console.log('All requests:', allRequests)
+        const relevantRequests = allRequests.filter((req: Request) => {
+          if (req.request_type !== "employer-underwriter") return false
+          
+          const involvesUser = 
+            (req.requester_type === "employer" && req.requester_id === user.id) || 
+            (req.recipient_type === "employer" && req.recipient_id === user.id)
             
-            const relevantRequests = allRequests.filter((req: any) => {
-              if (req.request_type !== "employer-underwriter") return false
-              
-              const involvesUser = 
-                (req.requester_type === "employer" && req.requester_id === user.id) || 
-                (req.recipient_type === "employer" && req.recipient_id === user.id)
-                
-              const involvesUnderwriter = 
-                (req.requester_type === "underwriter" && req.requester_id === underwriterData.user_id) || 
-                (req.recipient_type === "underwriter" && req.recipient_id === underwriterData.user_id)
-                
-              return involvesUser && involvesUnderwriter
-            })
+          const involvesUnderwriter = 
+            (req.requester_type === "underwriter" && req.requester_id === underwriterData.user_id) || 
+            (req.recipient_type === "underwriter" && req.recipient_id === underwriterData.user_id)
             
-            console.log('Relevant requests:', relevantRequests)
-            
-            const approvedRequest = relevantRequests.find((req: any) => req.status === "approved")
-            if (approvedRequest) {
-              isLinked = true
-            }
-          }
-        } catch (err) {
-          console.error("Error checking relationship status:", err)
+          return involvesUser && involvesUnderwriter
+        })
+        
+        console.log('Relevant requests:', relevantRequests)
+        
+        const approvedRequest = relevantRequests.find((req: Request) => req.status === "approved")
+        if (approvedRequest) {
+          isLinked = true
         }
 
         let userData = { first_name: "", last_name: "", email: "", phone: "" }
@@ -127,22 +195,59 @@ export default function UnderwriterDetails(): React.JSX.Element {
           }
         }
 
+        // Fetch employer name if available
+        let employerName = "N/A"
+        if (underwriterData.employer_id) {
+          const employerResponse = await fetch(`${API_BASE_URL}/employer/${underwriterData.employer_id}`)
+          if (employerResponse.ok) {
+            const employerData = await employerResponse.json()
+            employerName = employerData.name || `Employer ID: ${underwriterData.employer_id}`
+          }
+        }
+
+        // Fetch ratings and comments
+        setLoadingRatings(true)
+        let averageRating = null
+        let underwriterRatings: UserRating[] = []
+        
+        try {
+          if (underwriterData.user_id) {
+            const ratingsResponse = await fetch(`${API_BASE_URL}/user/${underwriterData.user_id}/ratings`)
+            if (!ratingsResponse.ok) throw new Error('Failed to fetch ratings')
+            
+            const ratingsData = await ratingsResponse.json()
+            underwriterRatings = ratingsData.ratings || []
+            
+            // Calculate average rating
+            if (underwriterRatings.length > 0) {
+              const sum = underwriterRatings.reduce((acc, curr) => acc + curr.rating, 0)
+              averageRating = sum / underwriterRatings.length
+            }
+          }
+        } catch (ratingError) {
+          console.error("Error fetching ratings:", ratingError)
+        } finally {
+          setLoadingRatings(false)
+        }
+
         setUnderwriter({
           id: underwriterData.id,
           user_id: underwriterData.user_id,
           name: `${userData.first_name || ""} ${userData.last_name || ""}`.trim() || underwriterData.name || "N/A",
           email: userData.email || underwriterData.email || "N/A",
           phone: userData.phone || underwriterData.phone || "N/A",
-          organisation_name: underwriterData.organisation_name || "N/A",
+          organisation: underwriterData.organisation || "N/A",
           float: underwriterData.float || 0,
           transactions: underwriterData.transactions || "N/A",
           employer: underwriterData.employer_id ? `ID: ${underwriterData.employer_id}` : "N/A",
-          ratings: underwriterData.ratings || 0,
+          employer_name: employerName,
           comments: underwriterData.comments || "",
           status: underwriterData.status || "active",
           created_at: underwriterData.created_at,
           updated_at: underwriterData.updated_at,
-          is_linked: isLinked
+          is_linked: isLinked,
+          average_rating: averageRating,
+          ratings: underwriterRatings
         })
 
         setLoading(false)
@@ -158,7 +263,6 @@ export default function UnderwriterDetails(): React.JSX.Element {
 
     fetchUnderwriterDetails()
 
- 
     const timer = setTimeout(() => {
       if (loading) {
         setTimeoutReached(true)
@@ -182,7 +286,7 @@ export default function UnderwriterDetails(): React.JSX.Element {
       if (requestsResponse.ok) {
         const allRequests = await requestsResponse.json()
         
-        const pendingRequests = allRequests.filter((req: any) => {
+        const pendingRequests = allRequests.filter((req: Request) => {
           if (req.request_type !== "employer-underwriter") return false
           if (req.status !== "pending") return false
           
@@ -252,7 +356,7 @@ export default function UnderwriterDetails(): React.JSX.Element {
 
   if (loading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="80vh">
         {timeoutReached ? (
           <Alert severity="warning">
             Loading is taking longer than expected. Please check your network connection.
@@ -286,102 +390,363 @@ export default function UnderwriterDetails(): React.JSX.Element {
   }
 
   return (
-    <Grid container spacing={3}>
-      <Grid xs={12}>
-        <Box sx={{ mb: 3, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <Button onClick={handleGoBack} variant="outlined">
-            Back to Underwriters
-          </Button>
-          <Typography variant="h4">Underwriter Details</Typography>
-          <Box />
-        </Box>
+    <Box sx={{ p: 1 }}>
+      <Button 
+        startIcon={<ArrowBackIcon />}
+        onClick={handleGoBack}
+        sx={{ mb: 1 }}
+      >
+        Back to Underwriters
+      </Button>
 
-        <Card>
-          <CardContent>
-            <Grid container spacing={3}>
-              <Grid xs={12} md={6}>
-                <Typography variant="h5" gutterBottom>
+      <Typography variant="h5" gutterBottom>
+        Underwriter Details
+      </Typography>
+
+      <Grid container spacing={3}>
+        {/* Underwriter Profile Card */}
+        <Grid item xs={12} md={4}>
+          <Card sx={{ height: '100%' }}>
+            <CardContent>
+              <Box display="flex" flexDirection="column" alignItems="center" p={2}>
+                <Avatar sx={{ 
+                  width: 120, 
+                  height: 120, 
+                  fontSize: 48,
+                  mb: 2,
+                  bgcolor: 'primary.main'
+                }}>
+                  {underwriter.name.split(' ').map(n => n[0]).join('')}
+                </Avatar>
+                <Typography variant="h5" align="center">
                   {underwriter.name}
                 </Typography>
-                <Typography variant="body2" color="text.secondary" gutterBottom>
-                  Underwriter ID: {underwriter.id}
+                <Typography color="text.secondary" align="center">
+                  Underwriter
                 </Typography>
-                {underwriter.user_id && (
-                  <Typography variant="body2" color="text.secondary" gutterBottom>
-                    User ID: {underwriter.user_id}
+                {underwriter.organisation && (
+                  <Typography color="text.secondary" align="center">
+                    {underwriter.organisation}
                   </Typography>
                 )}
+              </Box>
 
-                <Divider sx={{ my: 2 }} />
+              <Divider sx={{ my: 2 }} />
 
-                <Typography variant="subtitle1" gutterBottom>
-                  Contact Information
-                </Typography>
-                <Stack spacing={1}>
-                  <Typography variant="body2">
-                    <strong>Email:</strong> {underwriter.email}
+              <Stack spacing={2}>
+                <Box>
+                  <Typography variant="subtitle2" color="text.secondary">
+                    Email
                   </Typography>
-                  <Typography variant="body2">
-                    <strong>Phone:</strong> {underwriter.phone}
-                  </Typography>
-                  {underwriter.organisation_name && (
-                    <Typography variant="body2">
-                      <strong>Organisation:</strong> {underwriter.organisation_name}
-                    </Typography>
-                  )}
-                </Stack>
-              </Grid>
+                  <Typography>{underwriter.email}</Typography>
+                </Box>
 
-              <Grid xs={12} md={6}>
-                <Typography variant="subtitle1" gutterBottom>
-                  Additional Information
-                </Typography>
-                <Stack spacing={1}>
-                  <Typography variant="body2">
-                    <strong>Status:</strong> <Chip 
-                      label={underwriter.status} 
-                      color={underwriter.status === "active" || underwriter.status === "approved" ? "success" : "default"} 
-                      size="small" 
-                    />
+                <Box>
+                  <Typography variant="subtitle2" color="text.secondary">
+                    Phone
                   </Typography>
-                  <Typography variant="body2">
-                    <strong>Float:</strong> {underwriter.float !== null ? `$${underwriter.float.toLocaleString()}` : 'N/A'}
+                  <Typography>{underwriter.phone}</Typography>
+                </Box>
+
+                <Box>
+                  {/*<Typography variant="subtitle2" color="text.secondary">
+                    Rating
                   </Typography>
-                  <Typography variant="body2">
-                    <strong>Ratings:</strong> {underwriter.ratings !== null ? `${underwriter.ratings}/5` : 'N/A'}
+                  <Typography>
+                    {underwriter.average_rating ? `${underwriter.average_rating.toFixed(1)}/5` : 'No ratings yet'}
+                  </Typography>*/}
+                </Box>
+
+                {/*<Box>
+                  <Typography variant="subtitle2" color="text.secondary">
+                    Float Balance
                   </Typography>
-                  {underwriter.created_at && (
-                    <Typography variant="body2">
-                      <strong>Created:</strong> {new Date(underwriter.created_at).toLocaleString()}
-                    </Typography>
-                  )}
-                  {underwriter.is_linked && (
-                    <Typography variant="body2" color="success.main">
-                      <strong>Connection Status:</strong> Linked
-                    </Typography>
-                  )}
-                </Stack>
-              </Grid>
-            </Grid>
-          </CardContent>
-          <Divider />
-          <CardActions>
-            {!underwriter.is_linked ? (
-              <Button 
-                variant="contained" 
-                color="primary" 
-                onClick={handleRequestLink}
-                disabled={!user?.id || !underwriter.user_id}
-              >
-                Request Link to Underwriter
-              </Button>
-            ) : (
-              <Typography color="success.main">
-                You are already linked to this underwriter
+                  <Typography>${underwriter.float?.toLocaleString() || '0'}</Typography>
+                </Box>*/}
+              </Stack>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        {/* Main Content Area */}
+        <Grid item xs={12} md={8}>
+          {/* Connections Overview */}
+          <Card>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>
+                Connections
               </Typography>
-            )}
-          </CardActions>
-        </Card>
+              <Typography variant="body2" color="text.secondary" paragraph>
+                This underwriter is connected to the following entities through approved requests:
+              </Typography>
+
+              <Grid container spacing={2} sx={{ mt: 2 }}>
+                <Grid item xs={6} sm={3}>
+                  <Paper elevation={0} sx={{ 
+                    p: 2, 
+                    borderRadius: 2,
+                    border: '1px solid',
+                    borderColor: 'divider',
+                    textAlign: 'center'
+                  }}>
+                    <StoreIcon color="primary" sx={{ fontSize: 40 }} />
+                    <Typography variant="h5" sx={{ mt: 1 }}>
+                      {connectionCounts.merchants}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Merchants
+                    </Typography>
+                  </Paper>
+                </Grid>
+
+                <Grid item xs={6} sm={3}>
+                  <Paper elevation={0} sx={{ 
+                    p: 2, 
+                    borderRadius: 2,
+                    border: '1px solid',
+                    borderColor: 'divider',
+                    textAlign: 'center'
+                  }}>
+                    <GavelIcon color="secondary" sx={{ fontSize: 40 }} />
+                    <Typography variant="h5" sx={{ mt: 1 }}>
+                      {connectionCounts.underwriters}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Underwriters
+                    </Typography>
+                  </Paper>
+                </Grid>
+
+                <Grid item xs={6} sm={3}>
+                  <Paper elevation={0} sx={{ 
+                    p: 2, 
+                    borderRadius: 2,
+                    border: '1px solid',
+                    borderColor: 'divider',
+                    textAlign: 'center'
+                  }}>
+                    <BusinessIcon color="info" sx={{ fontSize: 40 }} />
+                    <Typography variant="h5" sx={{ mt: 1 }}>
+                      {connectionCounts.employers}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Employers
+                    </Typography>
+                  </Paper>
+                </Grid>
+
+                <Grid item xs={6} sm={3}>
+                  <Paper elevation={0} sx={{ 
+                    p: 2, 
+                    borderRadius: 2,
+                    border: '1px solid',
+                    borderColor: 'divider',
+                    textAlign: 'center'
+                  }}>
+                    <PeopleIcon color="success" sx={{ fontSize: 40 }} />
+                    <Typography variant="h5" sx={{ mt: 1 }}>
+                      {connectionCounts.clients}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Clients
+                    </Typography>
+                  </Paper>
+                </Grid>
+              </Grid>
+            </CardContent>
+          </Card>
+
+          {/* Additional Underwriter Information */}
+          <Card sx={{ mt: 3 }}>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>
+                Additional Information
+              </Typography>
+              <Grid container spacing={2}>
+                <Grid item xs={12} sm={6}>
+                  <Typography variant="subtitle2" color="text.secondary">
+                    Underwriter ID
+                  </Typography>
+                  <Typography>{underwriter.id}</Typography>
+                </Grid>
+                {underwriter.user_id && (
+                  <Grid item xs={12} sm={6}>
+                    <Typography variant="subtitle2" color="text.secondary">
+                      User ID
+                    </Typography>
+                    <Typography>{underwriter.user_id}</Typography>
+                  </Grid>
+                )}
+                <Grid item xs={12} sm={6}>
+                  <Typography variant="subtitle2" color="text.secondary">
+                    Organisation
+                  </Typography>
+                  <Typography>{underwriter.organisation}</Typography>
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <Typography variant="subtitle2" color="text.secondary">
+                    Average Rating
+                  </Typography>
+                  <Typography>
+                    {underwriter.average_rating ? `${underwriter.average_rating.toFixed(1)}/5` : 'No ratings yet'}
+                  </Typography>
+                </Grid>
+                {underwriter.created_at && (
+                  <Grid item xs={12} sm={6}>
+                    <Typography variant="subtitle2" color="text.secondary">
+                      Account Created
+                    </Typography>
+                    <Typography>
+                      {new Date(underwriter.created_at).toLocaleDateString()}
+                    </Typography>
+                  </Grid>
+                )}
+                {underwriter.updated_at && (
+                  <Grid item xs={12} sm={6}>
+                    <Typography variant="subtitle2" color="text.secondary">
+                      Last Updated
+                    </Typography>
+                    <Typography>
+                      {new Date(underwriter.updated_at).toLocaleDateString()}
+                    </Typography>
+                  </Grid>
+                )}
+              </Grid>
+            </CardContent>
+          </Card>
+
+          {/* Ratings and Comments Section */}
+                    <Card sx={{ mt: 3 }}>
+                      <CardContent>
+                        <Typography variant="h6" gutterBottom>
+                          Ratings & Comments
+                        </Typography>
+                        
+                        {loadingRatings ? (
+                          <Box display="flex" justifyContent="center" py={4}>
+                            <CircularProgress />
+                          </Box>
+                        ) : (
+                          <>
+                            {underwriter.average_rating !== null && (
+                              <Box display="flex" alignItems="center" mb={2}>
+                                <StarIcon color="warning" />
+                                <Typography variant="h6" ml={0.5}>
+                                  {underwriter.average_rating?.toFixed(1)}/5
+                                </Typography>
+                                <Typography variant="caption" color="text.secondary" ml={1}>
+                                  ({underwriter.ratings?.length || 0} ratings)
+                                </Typography>
+                              </Box>
+                            )}
+          
+                            {underwriter.ratings && underwriter.ratings.length > 0 ? (
+                              <Stack spacing={2}>
+                                {underwriter.ratings
+                                  .filter(rating => rating.comment) // Only show ratings with comments
+                                  .map((rating, index) => (
+                                    <Paper key={index} elevation={2} sx={{ p: 2 }}>
+                                      <Box display="flex" justifyContent="space-between">
+                                        <Typography fontWeight="bold">
+                                          {rating.rater_name}
+                                        </Typography>
+                                        <Box display="flex" alignItems="center">
+                                          <StarIcon color="warning" fontSize="small" />
+                                          <Typography ml={0.5}>{rating.rating}/5</Typography>
+                                        </Box>
+                                      </Box>
+                                      <Typography variant="body2" sx={{ mt: 1 }}>
+                                        {rating.comment}
+                                      </Typography>
+                                      <Typography variant="caption" color="text.secondary" display="block" mt={1}>
+                                        {new Date(rating.created_at).toLocaleString()}
+                                      </Typography>
+                                    </Paper>
+                                  ))}
+                                
+                                {underwriter.ratings.filter(r => r.comment).length === 0 && (
+                                  <Typography color="text.secondary">No comments available</Typography>
+                                )}
+                              </Stack>
+                            ) : (
+                              <Typography color="text.secondary">
+                                No ratings or comments yet
+                              </Typography>
+                            )}
+                          </>
+                        )}
+                      </CardContent>
+                    </Card>
+          {/* Ratings Display Section 
+          <Card sx={{ mt: 3 }}>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>
+                Ratings & Reviews
+              </Typography>
+              
+              {loadingRatings ? (
+                <Box display="flex" justifyContent="center" my={4}>
+                  <CircularProgress size={24} />
+                </Box>
+              ) : (
+                underwriter.ratings && underwriter.ratings.length > 0 ? (
+                  <Stack spacing={2}>
+                    {underwriter.ratings.map((rating, index) => (
+                      <Paper key={index} elevation={0} sx={{ 
+                        p: 2, 
+                        border: '1px solid',
+                        borderColor: 'divider',
+                        borderRadius: 1
+                      }}>
+                        <Box display="flex" justifyContent="space-between" alignItems="center">
+                          <Typography fontWeight="bold">{rating.rater_name}</Typography>
+                          <Chip 
+                            label={`${rating.rating}/5`} 
+                            color="primary" 
+                            size="small" 
+                          />
+                        </Box>
+                        {rating.comment && (
+                          <Typography variant="body2" sx={{ mt: 1 }}>
+                            {rating.comment}
+                          </Typography>
+                        )}
+                        <Typography variant="caption" color="text.secondary" display="block" mt={1}>
+                          Rated on: {new Date(rating.created_at).toLocaleDateString()}
+                        </Typography>
+                      </Paper>
+                    ))}
+                  </Stack>
+                ) : (
+                  <Typography variant="body2" color="text.secondary">
+                    No ratings available for this underwriter
+                  </Typography>
+                )
+              )}
+            </CardContent>
+          </Card>*/}
+
+          {/* Link Button */}
+          <Card sx={{ mt: 3 }}>
+            <CardActions>
+              {!underwriter.is_linked ? (
+                <Button 
+                  variant="contained" 
+                  color="primary" 
+                  onClick={handleRequestLink}
+                  disabled={!user?.id || !underwriter.user_id}
+                  fullWidth
+                >
+                  Request Link to Underwriter
+                </Button>
+              ) : (
+                <Typography color="success.main" sx={{ p: 2 }}>
+                  You are already linked to this underwriter
+                </Typography>
+              )}
+            </CardActions>
+          </Card>
+        </Grid>
       </Grid>
 
       <Snackbar
@@ -394,6 +759,6 @@ export default function UnderwriterDetails(): React.JSX.Element {
           {snackbarMessage}
         </Alert>
       </Snackbar>
-    </Grid>
+    </Box>
   )
 }

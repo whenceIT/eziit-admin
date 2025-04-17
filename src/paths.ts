@@ -29,6 +29,9 @@ export const paths = {
     },
     merchantStores: "/merchant-dashboard/stores",
     account: '/dashboard/account',
+    merchantratingsandcomments: '/dashboard/ratingsandcomments',
+
+
     //admin dashboard
     clients: {
       index: "/dashboard/clients",
@@ -55,6 +58,8 @@ export const paths = {
     },
     statistics: '/dashboard/statistics',
     users: '/dashboard/users',
+    ratingsandcomments: '/dashboard/ratingsandcomments',
+
     //employer dashboard
     employerOverview: '/employer-dashboard',
     employerTransactions: "/employer-dashboard/transactions",
@@ -79,6 +84,7 @@ export const paths = {
     },
 
     employeraccount: '/dashboard/account',
+    employerratingsandcomments: '/dashboard/ratingsandcomments',
     
 
     //underwriter dashboard
@@ -103,8 +109,8 @@ export const paths = {
       mylinkedmerchants: "/underwriter-dashboard/merchants/mylinkedmerchants",
       allmerchants: "/underwriter-dashboard/merchants/allmerchants"
     },
-    
     underwriteraccount: '/dashboard/account',
+    underwriterratingsandcomments: '/dashboard/ratingsandcomments',
   },
   errors: { notFound: '/errors/not-found' },
 } as const;

@@ -21,6 +21,7 @@ export interface Employer {
   name: string;
   email: string;
   phone: number;
+  organization: string;
   ratings: number | null;
 }
 
@@ -64,7 +65,7 @@ export const EmployersTable: React.FC<EmployersTableProps> = ({
               <TableCell>Email</TableCell>
               <TableCell>Phone</TableCell>
               <TableCell>Organization</TableCell>
-              <TableCell>Status</TableCell>
+              {/*<TableCell>Status</TableCell>*/}
               <TableCell>Actions</TableCell>
             </TableRow>
           </TableHead>
@@ -79,7 +80,7 @@ export const EmployersTable: React.FC<EmployersTableProps> = ({
                   <TableCell>{employer.name}</TableCell>
                   <TableCell>{employer.email}</TableCell>
                   <TableCell>{employer.phone || "N/A"}</TableCell>
-                  {/*<TableCell>{employer.organisation_name}</TableCell>*/}
+                  <TableCell>{employer.organization}</TableCell>
                   <TableCell>
                     <Stack direction="row" spacing={1}>
                       <Button

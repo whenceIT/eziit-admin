@@ -3,7 +3,7 @@ import {
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, 
   Button, TablePagination 
 } from "@mui/material";
-
+//
 export interface Merchant {
   id: number;
   user_id: string | null;
@@ -72,7 +72,7 @@ export const UnderwriterMerchantsTable: React.FC<UnderwriterMerchantsTableProps>
         </Table>
       </TableContainer>
       
-      {count > 0 && (
+      {/*{count > 0 && (
         <TablePagination
           component="div"
           count={count}
@@ -82,7 +82,7 @@ export const UnderwriterMerchantsTable: React.FC<UnderwriterMerchantsTableProps>
           rowsPerPage={rowsPerPage}
           rowsPerPageOptions={[5, 10, 25]}
         />
-      )}
+      )}*/}
     </>
   );
 };

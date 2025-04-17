@@ -12,7 +12,7 @@ import {
   Chip, 
   Button 
 } from "@mui/material"
-
+//
 export interface Merchant {
   id: number
   user_id: string | null
@@ -36,11 +36,21 @@ export interface Merchant {
 interface EmployerMerchantsTableProps {
   merchants: Merchant[]
   onViewDetails: (merchantId: number) => void
+  count?: number;
+    page: number;
+    rowsPerPage: number;
+    onPageChange: (event: unknown, newPage: number) => void;
+    onRowsPerPageChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
 export const EmployerMerchantsTable: React.FC<EmployerMerchantsTableProps> = ({ 
   merchants, 
-  onViewDetails 
+  onViewDetails,
+  count = 0,
+  page = 0,
+  rowsPerPage = 10,
+  onPageChange = () => {},
+  onRowsPerPageChange = () => {} 
 }) => {
   return (
     <TableContainer component={Paper}>
@@ -90,4 +100,4 @@ export const EmployerMerchantsTable: React.FC<EmployerMerchantsTableProps> = ({
       </Table>
     </TableContainer>
   )
-}
+}//

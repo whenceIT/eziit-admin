@@ -14,7 +14,7 @@ import { isNavItemActive } from "@/lib/is-nav-item-active";
 import { Logo } from "@/components/core/logo";
 import { useUser } from "@/hooks/use-user";
 
-import { adminNavItems, merchantNavItems, employerNavItems, underwriterNavItems } from "./config"; //add employerNavItems
+import { adminNavItems, merchantNavItems, employerNavItems, underwriterNavItems } from "./config"; 
 import { navIcons } from "./nav-icons";
 
 interface SideNavProps {
@@ -177,3 +177,4 @@ function NavItem({ disabled, external, href, icon, matcher, pathname, title, ite
     </li>
   );
 }
+//

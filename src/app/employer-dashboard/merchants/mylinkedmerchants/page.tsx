@@ -128,7 +128,14 @@ export default function AllMerchants(): React.JSX.Element {
           <Alert severity="info">No merchants found.</Alert>
         ) : (
           <Paper sx={{ width: "100%", overflow: "hidden" }}>
-            <EmployerMerchantsTable merchants={paginatedMerchants} onViewDetails={handleViewDetails} />
+            <EmployerMerchantsTable 
+              merchants={paginatedMerchants} 
+              onViewDetails={handleViewDetails} 
+              page={page} 
+              rowsPerPage={rowsPerPage} 
+              onPageChange={handleChangePage} 
+              onRowsPerPageChange={handleChangeRowsPerPage} 
+            />
             <TablePagination
               rowsPerPageOptions={[5, 10, 25]}
               component="div"
