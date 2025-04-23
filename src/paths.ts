@@ -37,16 +37,28 @@ export const paths = {
       index: "/dashboard/clients",
       merchants: "/dashboard/clients/linkedmerchants",
       employers: "/dashboard/clients/linkedemployers",
-      notLinked: "/dashboard/clients/not-linked",
-      linkedbyboth: "/dashboard/clients/linkedbyboth"
+      //notLinked: "/dashboard/clients/not-linked",
+      underwriters: "/dashboard/clients/linkedunderwriters",
     },
-    employers: '/dashboard/employers',
+    employers: {
+      index: "/dashboard/employers",
+      clients: "/dashboard/employers/linkedclients",
+      merchants: "/dashboard/employers/linkedmerchants",
+      //notLinked: "/dashboard/clients/not-linked",
+      underwriters: "/dashboard/employers/linkedunderwriters", 
+    },
     merchants: {
     index: "/dashboard/merchants",
-    viewmerchants: "/dashboard/merchants/viewmerchants",
-    pendingunderwriterapproval: "/dashboard/merchants/pendingunderwriterapproval"
+    clients: "/dashboard/merchants/linkedclients",
+    employers: "/dashboard/merchants/linkedemployers",
+    underwriters: "/dashboard/merchants/linkedunderwriters",
     },
-    underwriters: '/dashboard/underwriters',
+    underwriters: {
+      index: "/dashboard/underwriters",
+      clients: "/dashboard/underwriters/linkedclients",
+      employers: "/dashboard/underwriters/linkedemployers",
+      merchants: "/dashboard/underwriters/linkedmerchants",
+    },
     stores: '/dashboard/stores',
     reports: {
       index: "/dashboard/reports",

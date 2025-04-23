@@ -1,7 +1,7 @@
 "use client"
 
 import type * as React from "react"
-import { useState, useCallback } from "react"
+import { useState, useCallback, useEffect } from "react"
 import Button from "@mui/material/Button"
 import Stack from "@mui/material/Stack"
 import Typography from "@mui/material/Typography"
@@ -14,48 +14,74 @@ import type { Client } from "@/components/dashboard/client/clients-table"
 
 export default function EmployerClientsPage(): React.JSX.Element {
   const [clients, setClients] = useState<Client[]>([])
+  const [users, setUsers] = useState<any[]>([])
   const [activeFilter, setActiveFilter] = useState<string | null>(null)
   const [page, setPage] = useState(0)
   const [rowsPerPage, setRowsPerPage] = useState(15)
   const [isLoading, setIsLoading] = useState(false)
 
-  const fetchClients = useCallback(async (status: string | null) => {
-    if (!status) {
-      setClients([])
-      return
-    }
-
-    setIsLoading(true)
-    try {
-      const response = await fetch(`https://ezitt.whencefinancesystem.com/clients?type=employer`)
-      if (!response.ok) {
-        throw new Error("Network response was not ok")
+  // Fetch users once
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const response = await fetch("https://ezitt.whencefinancesystem.com/users")
+        if (!response.ok) throw new Error("Error fetching users")
+        const data = await response.json()
+        setUsers(data)
+      } catch (error) {
+        console.error("User fetch error:", error)
       }
-      const data = await response.json()
-
-      const filteredData = data.filter((client: any) => client.employer_status.toLowerCase() === status.toLowerCase())
-
-      const transformedData = filteredData.map((client: any) => ({
-        id: client.id ?? null,
-        user_id: client.user_id ?? "N/A",
-        float: client.float ?? 0,
-        merchants: client.merchants ?? "N/A",
-        transactions: client.transactions ?? "N/A",
-        employer: client.employer ?? "N/A",
-        ratings: client.ratings ?? 0,
-        comments: client.comments ?? "",
-        employer_status: client.employer_status ?? "",
-        merchant_status: client.merchant_status ?? "",
-      }))
-
-      setClients(transformedData)
-    } catch (error) {
-      console.error("Error fetching clients:", error)
-      setClients([])
-    } finally {
-      setIsLoading(false)
     }
+    fetchUsers()
   }, [])
+
+  // Fetch clients based on selected filter
+  const fetchClients = useCallback(
+    async (status: string | null) => {
+      setIsLoading(true)
+      try {
+        const response = await fetch("https://ezitt.whencefinancesystem.com/requests")
+        if (!response.ok) {
+          throw new Error("Network response was not ok")
+        }
+        const data = await response.json()
+
+        // Filter by request_type and status
+        const filteredRequests = data.filter((req: any) => {
+          const isValidType =
+            req.request_type === "employer-client" || req.request_type === "client-employer"
+          const isValidStatus = status ? req.status.toLowerCase() === status.toLowerCase() : true
+          return isValidType && isValidStatus
+        })
+
+        // Map to include user names
+        const transformedData = filteredRequests.map((request: any) => {
+          const requester = users.find((u) => u.id === request.requester_id)
+          const recipient = users.find((u) => u.id === request.recipient_id)
+
+          return {
+            id: request.id,
+            requester_first_name: requester ? requester.first_name : '',
+            requester_last_name: requester ? requester.last_name : '',
+            requester_type: request.requester_type,
+            recipient_first_name: recipient ? recipient.first_name : '',
+            recipient_last_name: recipient ? recipient.last_name : '',
+            recipient_type: request.recipient_type,
+            relationship_type: request.request_type,
+            status: request.status,
+          }
+        })
+
+        setClients(transformedData)
+      } catch (error) {
+        console.error("Error fetching requests:", error)
+        setClients([])
+      } finally {
+        setIsLoading(false)
+      }
+    },
+    [users]
+  )
 
   const handleFilter = useCallback(
     (status: string | null) => {
@@ -63,7 +89,7 @@ export default function EmployerClientsPage(): React.JSX.Element {
       fetchClients(status)
       setPage(0)
     },
-    [fetchClients],
+    [fetchClients]
   )
 
   const handlePageChange = useCallback((event: unknown, newPage: number) => {
@@ -80,13 +106,13 @@ export default function EmployerClientsPage(): React.JSX.Element {
   return (
     <>
       <Head>
-        <title>{`Employer Clients | Dashboard | ${config.site.name}`}</title>
+        <title>{` Client-Employer Relationships | Dashboard | ${config.site.name}`}</title>
       </Head>
 
       <Stack spacing={3}>
         <Stack direction="row" spacing={3}>
           <Stack spacing={1} sx={{ flex: "1 1 auto" }}>
-            <Typography variant="h4">Linked Employers</Typography>
+            <Typography variant="h5">Client-Employer Relationships</Typography>
             <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
               <Button
                 color={activeFilter === "approved" ? "primary" : "inherit"}
@@ -102,13 +128,13 @@ export default function EmployerClientsPage(): React.JSX.Element {
               >
                 Pending
               </Button>
-              <Button
+              {/*<Button
                 color={activeFilter === "declined" ? "primary" : "inherit"}
                 variant={activeFilter === "declined" ? "contained" : "outlined"}
                 onClick={() => handleFilter("declined")}
               >
                 Declined
-              </Button>
+              </Button>*/}
               {activeFilter && (
                 <Button color="inherit" variant="outlined" onClick={() => handleFilter(null)}>
                   Clear Filter
@@ -117,7 +143,8 @@ export default function EmployerClientsPage(): React.JSX.Element {
             </Stack>
           </Stack>
         </Stack>
-        <ClientsFilters />
+
+        
         {isLoading ? (
           <Typography>Loading...</Typography>
         ) : clients.length > 0 ? (
@@ -131,7 +158,7 @@ export default function EmployerClientsPage(): React.JSX.Element {
           />
         ) : (
           <Typography>
-            {activeFilter ? "No clients found for the selected filter." : "Please select a filter to view clients."}
+            {activeFilter ? "No requests found for the selected filter." : "Please select a filter to view requests."}
           </Typography>
         )}
       </Stack>
@@ -142,4 +169,3 @@ export default function EmployerClientsPage(): React.JSX.Element {
 function applyPagination(rows: Client[], page: number, rowsPerPage: number): Client[] {
   return rows.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
 }
-

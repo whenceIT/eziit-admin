@@ -8,19 +8,16 @@ import Typography from "@mui/material/Typography"
 import Head from "next/head"
 
 import { config } from "@/config"
-import { ClientsFilters } from "@/components/dashboard/client/clients-filters"
-import { ClientsTable } from "@/components/dashboard/client/clients-table"
-import type { Client } from "@/components/dashboard/client/clients-table"
+import { EmployersTable } from "@/components/dashboard/employer/employers-table"
 
-export default function MerchantClientsPage(): React.JSX.Element {
-  const [clients, setClients] = useState<Client[]>([])
+export default function EmployerUnderwritersPage(): React.JSX.Element {
+  const [relationships, setRelationships] = useState<any[]>([])
   const [users, setUsers] = useState<any[]>([])
   const [activeFilter, setActiveFilter] = useState<string | null>(null)
   const [page, setPage] = useState(0)
-  const [rowsPerPage, setRowsPerPage] = useState(15)
+  const [rowsPerPage, setRowsPerPage] = useState(10)
   const [isLoading, setIsLoading] = useState(false)
 
-  // Fetch users once
   useEffect(() => {
     const fetchUsers = async () => {
       try {
@@ -35,26 +32,20 @@ export default function MerchantClientsPage(): React.JSX.Element {
     fetchUsers()
   }, [])
 
-  // Fetch clients based on selected filter
-  const fetchClients = useCallback(
+  const fetchRelationships = useCallback(
     async (status: string | null) => {
       setIsLoading(true)
       try {
         const response = await fetch("https://ezitt.whencefinancesystem.com/requests")
-        if (!response.ok) {
-          throw new Error("Network response was not ok")
-        }
+        if (!response.ok) throw new Error("Network response was not ok")
         const data = await response.json()
 
-        // Filter by request_type and status
         const filteredRequests = data.filter((req: any) => {
-          const isValidType =
-            req.request_type === "client-merchant" || req.request_type === "merchant-client"
+          const isValidType = req.request_type === "merchant-underwriter" || req.request_type === "underwriter-merchant"
           const isValidStatus = status ? req.status.toLowerCase() === status.toLowerCase() : true
           return isValidType && isValidStatus
         })
 
-        // Map to include user names
         const transformedData = filteredRequests.map((request: any) => {
           const requester = users.find((u) => u.id === request.requester_id)
           const recipient = users.find((u) => u.id === request.recipient_id)
@@ -72,10 +63,10 @@ export default function MerchantClientsPage(): React.JSX.Element {
           }
         })
 
-        setClients(transformedData)
+        setRelationships(transformedData)
       } catch (error) {
-        console.error("Error fetching requests:", error)
-        setClients([])
+        console.error("Error fetching relationships:", error)
+        setRelationships([])
       } finally {
         setIsLoading(false)
       }
@@ -84,35 +75,36 @@ export default function MerchantClientsPage(): React.JSX.Element {
   )
 
   const handleFilter = useCallback(
-    (status: string | null) => {
-      setActiveFilter(status)
-      fetchClients(status)
+      (status: string | null) => {
+        setActiveFilter(status)
+        fetchRelationships(status)
+        setPage(0)
+      },
+      [fetchRelationships]
+    )
+  
+    const handlePageChange = useCallback((event: unknown, newPage: number) => {
+      setPage(newPage)
+    }, [])
+  
+    const handleRowsPerPageChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+      setRowsPerPage(Number.parseInt(event.target.value, 10))
       setPage(0)
-    },
-    [fetchClients]
-  )
-
-  const handlePageChange = useCallback((event: unknown, newPage: number) => {
-    setPage(newPage)
-  }, [])
-
-  const handleRowsPerPageChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-    setRowsPerPage(Number.parseInt(event.target.value, 10))
-    setPage(0)
-  }, [])
-
-  const paginatedClients = applyPagination(clients, page, rowsPerPage)
+    }, [])
+  
+    const paginatedRelationships = applyPagination(relationships, page, rowsPerPage)
+  
 
   return (
     <>
       <Head>
-        <title>{`Client-Merchant Relationships | Dashboard | ${config.site.name}`}</title>
+        <title>{`Merchant-underwriter Relationships | Dashboard | ${config.site.name}`}</title>
       </Head>
 
       <Stack spacing={3}>
         <Stack direction="row" spacing={3}>
           <Stack spacing={1} sx={{ flex: "1 1 auto" }}>
-            <Typography variant="h5">Client-Merchant Relationships</Typography>
+            <Typography variant="h5">Merchant-Underwriter Relationships</Typography>
             <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
               <Button
                 color={activeFilter === "approved" ? "primary" : "inherit"}
@@ -143,29 +135,28 @@ export default function MerchantClientsPage(): React.JSX.Element {
             </Stack>
           </Stack>
         </Stack>
-
-        {/*<ClientsFilters />*/}
+        
         {isLoading ? (
-          <Typography>Loading...</Typography>
-        ) : clients.length > 0 ? (
-          <ClientsTable
-            count={clients.length}
-            rows={paginatedClients}
-            onPageChange={handlePageChange}
-            onRowsPerPageChange={handleRowsPerPageChange}
-            page={page}
-            rowsPerPage={rowsPerPage}
-          />
-        ) : (
-          <Typography>
-            {activeFilter ? "No requests found for the selected filter." : "Please select a filter to view requests."}
-          </Typography>
-        )}
+            <Typography>Loading...</Typography>
+                ) : relationships.length > 0 ? (
+            <EmployersTable
+                count={relationships.length}
+                items={paginatedRelationships}
+                onPageChange={handlePageChange}
+                onRowsPerPageChange={handleRowsPerPageChange}
+                page={page}
+                rowsPerPage={rowsPerPage}
+            />
+            ) : (
+            <Typography>
+                {activeFilter ? "No relationships found for the selected filter." : "Please select a filter to view relationships."}
+            </Typography>
+            )}
       </Stack>
     </>
   )
 }
 
-function applyPagination(rows: Client[], page: number, rowsPerPage: number): Client[] {
+function applyPagination(rows: any[], page: number, rowsPerPage: number): any[] {
   return rows.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
 }

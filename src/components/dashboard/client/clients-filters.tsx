@@ -11,7 +11,7 @@ export function ClientsFilters(): React.JSX.Element {
       <OutlinedInput
         defaultValue=""
         fullWidth
-        placeholder="Search client"
+        placeholder="Search"
         startAdornment={
           <InputAdornment position="start">
             <MagnifyingGlassIcon fontSize="var(--icon-fontSize-md)" />

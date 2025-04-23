@@ -12,7 +12,7 @@ import { ClientsFilters } from "@/components/dashboard/client/clients-filters"
 import { ClientsTable } from "@/components/dashboard/client/clients-table"
 import type { Client } from "@/components/dashboard/client/clients-table"
 
-export default function MerchantClientsPage(): React.JSX.Element {
+export default function UnderwriterClientsPage(): React.JSX.Element {
   const [clients, setClients] = useState<Client[]>([])
   const [users, setUsers] = useState<any[]>([])
   const [activeFilter, setActiveFilter] = useState<string | null>(null)
@@ -49,7 +49,7 @@ export default function MerchantClientsPage(): React.JSX.Element {
         // Filter by request_type and status
         const filteredRequests = data.filter((req: any) => {
           const isValidType =
-            req.request_type === "client-merchant" || req.request_type === "merchant-client"
+            req.request_type === "underwriter-client" || req.request_type === "client-underwriter"
           const isValidStatus = status ? req.status.toLowerCase() === status.toLowerCase() : true
           return isValidType && isValidStatus
         })
@@ -106,13 +106,13 @@ export default function MerchantClientsPage(): React.JSX.Element {
   return (
     <>
       <Head>
-        <title>{`Client-Merchant Relationships | Dashboard | ${config.site.name}`}</title>
+        <title>{`Client-Underwriter Relationships | Dashboard | ${config.site.name}`}</title>
       </Head>
 
       <Stack spacing={3}>
         <Stack direction="row" spacing={3}>
           <Stack spacing={1} sx={{ flex: "1 1 auto" }}>
-            <Typography variant="h5">Client-Merchant Relationships</Typography>
+            <Typography variant="h5">Client-Underwriter Relationships</Typography>
             <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
               <Button
                 color={activeFilter === "approved" ? "primary" : "inherit"}
@@ -144,7 +144,7 @@ export default function MerchantClientsPage(): React.JSX.Element {
           </Stack>
         </Stack>
 
-        {/*<ClientsFilters />*/}
+        
         {isLoading ? (
           <Typography>Loading...</Typography>
         ) : clients.length > 0 ? (
@@ -158,7 +158,7 @@ export default function MerchantClientsPage(): React.JSX.Element {
           />
         ) : (
           <Typography>
-            {activeFilter ? "No requests found for the selected filter." : "Please select a filter to view requests."}
+            {activeFilter ? "No underwriter relationships found for the selected filter." : "Please select a filter to view relationships."}
           </Typography>
         )}
       </Stack>

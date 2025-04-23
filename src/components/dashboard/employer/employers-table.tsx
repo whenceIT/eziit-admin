@@ -12,16 +12,20 @@ import {
   Paper,
   Chip,
   Button,
+  TextField,
 } from '@mui/material';
 import { useRouter } from 'next/navigation';
-//
+
 export interface Employer {
-  id: number;
-  name: string;
-  email: string;
-  phone: string;
-  float: number;
-  ratings: number;
+  id: string;
+  requester_first_name: string;
+  requester_last_name: string;
+  requester_type: string;
+  recipient_first_name: string;
+  recipient_last_name: string;
+  recipient_type: string;
+  relationship_type: string;
+  status: string;
 }
 
 interface EmployersTableProps {
@@ -32,7 +36,7 @@ interface EmployersTableProps {
   page: number;
   rowsPerPage: number;
 }
-//
+
 export const EmployersTable: React.FC<EmployersTableProps> = ({
   count,
   items,
@@ -42,52 +46,83 @@ export const EmployersTable: React.FC<EmployersTableProps> = ({
   rowsPerPage,
 }) => {
   const router = useRouter();
+  const [searchTerm, setSearchTerm] = React.useState('');
 
-  const handleDetailsClick = (employerId: number) => {
-    router.push(`/dashboard/employers/${employerId}`);
-  };
+  const filteredItems = React.useMemo(() => {
+    if (!searchTerm.trim()) return items;
+
+    const term = searchTerm.toLowerCase().trim();
+    return items.filter((employer) => {
+      const searchString = [
+        employer.id,
+        employer.requester_first_name,
+        employer.requester_last_name,
+        employer.requester_type,
+        employer.recipient_first_name,
+        employer.recipient_last_name,
+        employer.recipient_type,
+        employer.relationship_type,
+        employer.status,
+      ].join(' ').toLowerCase();
+
+      return searchString.includes(term);
+    });
+  }, [items, searchTerm]);
 
   return (
     <Card>
+      <Box sx={{ p: 2 }}>
+        <TextField
+          fullWidth
+          variant="outlined"
+          label="Search"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          placeholder="Search by any field..."
+          sx={{ mb: 2 }}
+        />
+      </Box>
+      
       <TableContainer component={Paper}>
         <Table sx={{ minWidth: 800 }} aria-label="employers table">
           <TableHead>
             <TableRow>
               <TableCell>ID</TableCell>
-              <TableCell>Name</TableCell>
-              <TableCell>Email</TableCell>
-              <TableCell>Phone</TableCell>
-              <TableCell>Float</TableCell>
-              <TableCell>Ratings</TableCell>
-              <TableCell>Actions</TableCell>
+              <TableCell>Requester</TableCell>
+              <TableCell>Requester Type</TableCell>
+              <TableCell>Recipient</TableCell>
+              <TableCell>Recipient Type</TableCell>
+              <TableCell>Relationship Type</TableCell>
+              <TableCell>Status</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {Array.isArray(items) ? (
-              items.map((employer) => (
-                <TableRow hover key={employer.id}>
-                  <TableCell>{employer.id}</TableCell>
-                  <TableCell>{employer.name}</TableCell>
-                  <TableCell>{employer.email}</TableCell>
-                  <TableCell>{employer.phone}</TableCell>
-                  <TableCell>{employer.float}</TableCell>
-                  <TableCell>{employer.ratings}</TableCell>
-                  <TableCell>
-                    <Button
-                      variant="contained"
-                      color="primary"
-                      size="small"
-                      onClick={() => handleDetailsClick(employer.id)}
-                    >
-                      View Details 
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))
+            {filteredItems.length > 0 ? (
+              filteredItems
+                .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                .map((employer) => (
+                  <TableRow hover key={employer.id}>
+                    <TableCell>{employer.id}</TableCell>
+                    <TableCell>{`${employer.requester_first_name} ${employer.requester_last_name}`}</TableCell>
+                    <TableCell>{employer.requester_type}</TableCell>
+                    <TableCell>{`${employer.recipient_first_name} ${employer.recipient_last_name}`}</TableCell>
+                    <TableCell>{employer.recipient_type}</TableCell>
+                    <TableCell>{employer.relationship_type}</TableCell>
+                    <TableCell>
+                      <Chip 
+                        label={employer.status} 
+                        color={
+                          employer.status === 'approved' ? 'success' : 
+                          employer.status === 'pending' ? 'warning' : 'error'
+                        } 
+                      />
+                    </TableCell>
+                  </TableRow>
+                ))
             ) : (
               <TableRow>
                 <TableCell colSpan={7} align="center">
-                  No Employers Found
+                  No matching employers found
                 </TableCell>
               </TableRow>
             )}
@@ -96,7 +131,7 @@ export const EmployersTable: React.FC<EmployersTableProps> = ({
       </TableContainer>
       <TablePagination
         component="div"
-        count={count}
+        count={filteredItems.length}
         onPageChange={onPageChange}
         onRowsPerPageChange={onRowsPerPageChange}
         page={page}
