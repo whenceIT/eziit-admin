@@ -137,7 +137,7 @@ export default function ClientDetailsPage() {
                     }
                   />
                 </Grid>
-                <Grid item xs={12} sm={6}>
+                {/*<Grid item xs={12} sm={6}>
                   <Typography variant="subtitle1">Transactions</Typography>
                   <Typography variant="body1">{client.transactions}</Typography>
                 </Grid>
@@ -158,7 +158,7 @@ export default function ClientDetailsPage() {
                 <Grid item xs={12} sm={6}>
                   <Typography variant="subtitle1">Employers</Typography>
                   <Typography variant="body1">{client.employer}</Typography>
-                </Grid>
+                </Grid>*/}
               </Grid>
             </>
           ) : (
