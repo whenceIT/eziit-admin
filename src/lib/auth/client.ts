@@ -2,7 +2,7 @@ import axios from "axios"
 import type { User } from "@/types/user"
 import Cookies from "js-cookie" 
 //
-const API_BASE_URL = "http://localhost:5000"
+const API_BASE_URL = "https://ezitt.whencefinancesystem.com"
 const TOKEN_KEY = "auth-token"
 const USER_DATA_KEY = "user-data"
 
@@ -33,7 +33,7 @@ class AuthClient {
           this.user = JSON.parse(userData)
         } catch (e) {
           console.error("Failed to parse user data:", e)
-          this.clearToken()  // Clear invalid data
+          this.clearToken() 
         }
       }
     }
@@ -65,7 +65,7 @@ class AuthClient {
   }
 
   async signUp(params: SignUpParams): Promise<User> {
-    const response = await axios.post(`http://localhost:5000/create-user`, params)
+    const response = await axios.post(`https://ezitt.whencefinancesystem.com/create-user`, params)
     const { token, user } = response.data
     this.setToken(token)
     this.setUser(user)
@@ -74,7 +74,7 @@ class AuthClient {
 
   async signIn(params: SignInParams): Promise<User> {
     try {
-      const response = await axios.post(`http://localhost:5000/sign-in`, params)
+      const response = await axios.post(`https://ezitt.whencefinancesystem.com/sign-in`, params)
       const { token, user } = response.data
       this.setToken(token)
       this.setUser(user)
@@ -130,9 +130,6 @@ class AuthClient {
   getToken(): string | null {
     return this.token
   }
-
-  
-
 
 }
 
